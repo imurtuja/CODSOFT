@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Loading from '../../components/Loading'
 import ProductCard from '../../components/ProductCard'
@@ -16,7 +16,7 @@ export default function ProductsPage() {
     fetchProducts()
   }, [currentPage, sortBy, priceRange, fetchProducts])
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true)
       
