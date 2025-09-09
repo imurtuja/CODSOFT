@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Loading from '../../../components/Loading'
@@ -16,7 +16,7 @@ export default function CategoryPage() {
     fetchProducts()
   }, [params.slug, sortBy, priceRange, fetchProducts])
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/products?category=${params.slug}`)
@@ -51,7 +51,7 @@ export default function CategoryPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [params.slug, sortBy, priceRange])
 
   const getCategoryName = (slug) => {
     return slug.charAt(0).toUpperCase() + slug.slice(1)

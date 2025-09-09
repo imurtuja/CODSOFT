@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -19,7 +19,7 @@ export default function ProductPage() {
     }
   }, [params.id, fetchProduct])
 
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     try {
       const response = await fetch(`/api/products/${params.id}`)
       if (response.ok) {
@@ -31,7 +31,7 @@ export default function ProductPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [params.id])
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-IN', {

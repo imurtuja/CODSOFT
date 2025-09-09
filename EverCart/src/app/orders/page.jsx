@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Loading from '../../components/Loading'
 
@@ -12,7 +12,7 @@ export default function OrdersPage() {
     fetchUserOrders()
   }, [checkUserAuthentication, fetchUserOrders])
 
-  const checkUserAuthentication = () => {
+  const checkUserAuthentication = useCallback(() => {
     try {
       const userData = localStorage.getItem('currentUser')
       if (!userData) {
@@ -25,9 +25,9 @@ export default function OrdersPage() {
       console.error('Authentication check failed:', error)
       return false
     }
-  }
+  }, [])
 
-  const fetchUserOrders = async () => {
+  const fetchUserOrders = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -56,7 +56,7 @@ export default function OrdersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   const formatPrice = (price) => {
     if (!price || isNaN(price)) return '₹0'

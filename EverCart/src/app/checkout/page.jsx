@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -187,7 +187,7 @@ export default function CheckoutPage() {
     }
   }
 
-  const loadAddresses = async () => {
+  const loadAddresses = useCallback(async () => {
     if (!isLoggedIn || !userData) {
       return
     }
@@ -207,7 +207,7 @@ export default function CheckoutPage() {
     } catch (error) {
       console.error('Error loading addresses:', error)
     }
-  }
+  }, [isLoggedIn, userData])
 
   const saveAddress = async () => {
     if (!isLoggedIn || !userData) {

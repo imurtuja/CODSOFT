@@ -34,7 +34,7 @@ export default function ProfilePage() {
     checkAuth()
   }, [checkAuth])
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     const user = localStorage.getItem('currentUser')
     if (!user) {
       alert('Please login to view your profile')
@@ -52,7 +52,7 @@ export default function ProfilePage() {
     
     // Load addresses from API
     await loadAddresses(userData._id)
-  }
+  }, [])
 
   const loadAddresses = async (userId) => {
     try {

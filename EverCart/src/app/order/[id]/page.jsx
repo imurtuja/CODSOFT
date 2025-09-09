@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Loading from '../../../components/Loading'
@@ -15,7 +15,7 @@ export default function OrderDetailsPage() {
     }
   }, [params.id, loadOrder])
 
-  const loadOrder = async () => {
+  const loadOrder = useCallback(async () => {
     try {
       const response = await fetch(`/api/orders/${params.id}`)
       const data = await response.json()
@@ -33,7 +33,7 @@ export default function OrderDetailsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [params.id])
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-IN', {

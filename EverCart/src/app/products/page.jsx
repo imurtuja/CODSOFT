@@ -60,7 +60,7 @@ export default function ProductsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentPage, sortBy, priceRange])
 
   if (loading) return <Loading />
 

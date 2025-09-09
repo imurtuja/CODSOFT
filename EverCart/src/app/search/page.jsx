@@ -1,11 +1,11 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Loading from '../../components/Loading'
 import ProductCard from '../../components/ProductCard'
 
-export default function SearchPage() {
+function SearchPageContent() {
   const searchParams = useSearchParams()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -25,7 +25,7 @@ export default function SearchPage() {
     }
   }, [searchParams, currentPage, sortBy, priceRange, fetchProducts])
 
-  const fetchProducts = async (query) => {
+  const fetchProducts = useCallback(async (query) => {
     try {
       setLoading(true)
       const response = await fetch(`/api/products?search=${encodeURIComponent(query)}&page=${currentPage}&limit=12`)
@@ -61,7 +61,7 @@ export default function SearchPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentPage, sortBy, priceRange])
 
   if (loading) return <Loading />
 
@@ -184,5 +184,13 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <SearchPageContent />
+    </Suspense>
   )
 }

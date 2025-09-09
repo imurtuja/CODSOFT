@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import Loading from '../../components/Loading'
@@ -52,7 +52,7 @@ export default function AdminPage() {
     }
   }
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true)
       if (activeTab === 'products') {
@@ -69,7 +69,7 @@ export default function AdminPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [activeTab])
 
   const handleProductSubmit = async (e) => {
     e.preventDefault()
