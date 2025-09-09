@@ -13,7 +13,7 @@ export default function OrderDetailsPage() {
     if (params.id) {
       loadOrder()
     }
-  }, [params.id, loadOrder])
+  }, [params.id])
 
   const loadOrder = useCallback(async () => {
     try {

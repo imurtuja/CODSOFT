@@ -14,7 +14,7 @@ export default function CategoryPage() {
 
   useEffect(() => {
     fetchProducts()
-  }, [params.slug, sortBy, priceRange, fetchProducts])
+  }, [params.slug, sortBy, priceRange])
 
   const fetchProducts = useCallback(async () => {
     try {

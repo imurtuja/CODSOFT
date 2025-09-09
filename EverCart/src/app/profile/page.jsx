@@ -32,7 +32,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     checkAuth()
-  }, [checkAuth])
+  }, [])
 
   const checkAuth = useCallback(async () => {
     const user = localStorage.getItem('currentUser')

@@ -17,7 +17,7 @@ export default function ProductPage() {
     if (params.id) {
       fetchProduct()
     }
-  }, [params.id, fetchProduct])
+  }, [params.id])
 
   const fetchProduct = useCallback(async () => {
     try {

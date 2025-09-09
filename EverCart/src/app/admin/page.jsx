@@ -34,7 +34,7 @@ export default function AdminPage() {
   useEffect(() => {
     checkAuth()
     loadData()
-  }, [activeTab, loadData])
+  }, [activeTab])
 
   const checkAuth = () => {
     const user = localStorage.getItem('currentUser')

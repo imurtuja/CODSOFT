@@ -154,7 +154,7 @@ export default function CheckoutPage() {
     if (isLoggedIn && userData) {
       loadAddresses()
     }
-  }, [isLoggedIn, userData, loadAddresses])
+  }, [isLoggedIn, userData])
 
 
   const loadCart = () => {

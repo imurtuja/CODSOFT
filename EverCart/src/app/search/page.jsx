@@ -23,7 +23,7 @@ function SearchPageContent() {
     } else {
       setLoading(false)
     }
-  }, [searchParams, currentPage, sortBy, priceRange, fetchProducts])
+  }, [searchParams, currentPage, sortBy, priceRange])
 
   const fetchProducts = useCallback(async (query) => {
     try {

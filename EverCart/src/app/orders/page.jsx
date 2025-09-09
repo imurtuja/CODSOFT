@@ -10,7 +10,7 @@ export default function OrdersPage() {
   useEffect(() => {
     checkUserAuthentication()
     fetchUserOrders()
-  }, [checkUserAuthentication, fetchUserOrders])
+  }, [])
 
   const checkUserAuthentication = useCallback(() => {
     try {
@@ -56,7 +56,7 @@ export default function OrdersPage() {
     } finally {
       setLoading(false)
     }
-  }, [checkUserAuthentication])
+  }, [])
 
   const formatPrice = (price) => {
     if (!price || isNaN(price)) return '₹0'

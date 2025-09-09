@@ -14,7 +14,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchProducts()
-  }, [currentPage, sortBy, priceRange, fetchProducts])
+  }, [currentPage, sortBy, priceRange])
 
   const fetchProducts = useCallback(async () => {
     try {
