@@ -56,7 +56,7 @@ export default function OrdersPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [checkUserAuthentication])
 
   const formatPrice = (price) => {
     if (!price || isNaN(price)) return '₹0'
