@@ -483,24 +483,11 @@ export default function AdminPage() {
                       >
                         <option value="">Select Category</option>
                         <option value="Electronics">Electronics</option>
-                        <option value="electronics">electronics</option>
-                        <option value="Computers">Computers</option>
-                        <option value="computers">computers</option>
-                        <option value="Mobile">Mobile</option>
-                        <option value="mobile">mobile</option>
-                        <option value="Audio">Audio</option>
-                        <option value="audio">audio</option>
+                        <option value="Laptops">Laptops</option>
                         <option value="Gaming">Gaming</option>
-                        <option value="gaming">gaming</option>
+                        <option value="Audio">Audio</option>
+                        <option value="Cameras">Cameras</option>
                         <option value="Accessories">Accessories</option>
-                        <option value="accessories">accessories</option>
-                        <option value="Home & Kitchen">Home & Kitchen</option>
-                        <option value="home & kitchen">home & kitchen</option>
-                        <option value="Health & Fitness">Health & Fitness</option>
-                        <option value="health & fitness">health & fitness</option>
-                        {productForm.category && !['Electronics', 'electronics', 'Computers', 'computers', 'Mobile', 'mobile', 'Audio', 'audio', 'Gaming', 'gaming', 'Accessories', 'accessories', 'Home & Kitchen', 'home & kitchen', 'Health & Fitness', 'health & fitness'].includes(productForm.category) && (
-                          <option value={productForm.category}>{productForm.category}</option>
-                        )}
                       </select>
                     </div>
                   </div>
