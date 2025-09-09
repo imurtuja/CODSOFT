@@ -17,7 +17,7 @@ export default function ProductPage() {
     if (params.id) {
       fetchProduct()
     }
-  }, [params.id])
+  }, [params.id, fetchProduct])
 
   const fetchProduct = async () => {
     try {

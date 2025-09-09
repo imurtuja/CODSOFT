@@ -23,7 +23,7 @@ export default function SearchPage() {
     } else {
       setLoading(false)
     }
-  }, [searchParams, currentPage, sortBy, priceRange])
+  }, [searchParams, currentPage, sortBy, priceRange, fetchProducts])
 
   const fetchProducts = async (query) => {
     try {
@@ -95,7 +95,7 @@ export default function SearchPage() {
           </nav>
           
           <h1 className="text-3xl font-bold text-gray-900">
-            Search Results for "{searchQuery}"
+            Search Results for &ldquo;{searchQuery}&rdquo;
           </h1>
           
           {/* Filters */}

@@ -14,7 +14,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchProducts()
-  }, [currentPage, sortBy, priceRange])
+  }, [currentPage, sortBy, priceRange, fetchProducts])
 
   const fetchProducts = async () => {
     try {

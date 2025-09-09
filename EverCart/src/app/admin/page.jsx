@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import Loading from '../../components/Loading'
 
 export default function AdminPage() {
@@ -33,7 +34,7 @@ export default function AdminPage() {
   useEffect(() => {
     checkAuth()
     loadData()
-  }, [activeTab])
+  }, [activeTab, loadData])
 
   const checkAuth = () => {
     const user = localStorage.getItem('currentUser')
@@ -269,9 +270,11 @@ export default function AdminPage() {
                               <div className="flex items-center">
                                 <div className="w-8 h-8 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center">
                                   {product.images && product.images.length > 0 ? (
-                                    <img 
+                                    <Image 
                                       src={product.images[0]} 
                                       alt={product.name}
+                                      width={32}
+                                      height={32}
                                       className="w-full h-full object-cover rounded-lg"
                                       onError={(e) => {
                                         e.target.style.display = 'none'

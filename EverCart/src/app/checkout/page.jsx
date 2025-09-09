@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -153,7 +154,7 @@ export default function CheckoutPage() {
     if (isLoggedIn && userData) {
       loadAddresses()
     }
-  }, [isLoggedIn, userData])
+  }, [isLoggedIn, userData, loadAddresses])
 
 
   const loadCart = () => {
@@ -710,9 +711,11 @@ export default function CheckoutPage() {
               <div className="space-y-4">
                 {cartItems.map((item, index) => (
                   <div key={index} className="flex items-center space-x-4">
-                    <img
+                    <Image
                       src={item.image || '/placeholder-product.jpg'}
                       alt={item.name}
+                      width={64}
+                      height={64}
                       className="w-16 h-16 object-cover rounded"
                     />
                     <div className="flex-1">

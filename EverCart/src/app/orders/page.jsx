@@ -10,7 +10,7 @@ export default function OrdersPage() {
   useEffect(() => {
     checkUserAuthentication()
     fetchUserOrders()
-  }, [])
+  }, [checkUserAuthentication, fetchUserOrders])
 
   const checkUserAuthentication = () => {
     try {

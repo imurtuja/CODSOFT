@@ -13,7 +13,7 @@ export default function OrderDetailsPage() {
     if (params.id) {
       loadOrder()
     }
-  }, [params.id])
+  }, [params.id, loadOrder])
 
   const loadOrder = async () => {
     try {
