@@ -31,12 +31,7 @@ export default function AdminPage() {
     tags: []
   })
 
-  useEffect(() => {
-    checkAuth()
-    loadData()
-  }, [activeTab])
-
-  const checkAuth = () => {
+  const checkAuth = useCallback(() => {
     const user = localStorage.getItem('currentUser')
     if (!user) {
       alert('Please login to access admin panel')
@@ -50,7 +45,7 @@ export default function AdminPage() {
       window.location.href = '/'
       return
     }
-  }
+  }, [])
 
   const loadData = useCallback(async () => {
     try {
@@ -70,6 +65,11 @@ export default function AdminPage() {
       setLoading(false)
     }
   }, [activeTab])
+
+  useEffect(() => {
+    checkAuth()
+    loadData()
+  }, [checkAuth, loadData])
 
   const handleProductSubmit = async (e) => {
     e.preventDefault()

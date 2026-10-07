@@ -5,8 +5,9 @@ import Product from '../../../../models/Product.js'
 export async function GET(request, { params }) {
   try {
     await connectDB()
+    const { id } = await params
     
-    const product = await Product.findById(params.id)
+    const product = await Product.findById(id)
     
     if (!product) {
       return NextResponse.json(
@@ -29,6 +30,7 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     await connectDB()
+    const { id } = await params
     
     const body = await request.json()
     const { name, brand, price, description, category, stock } = body
@@ -72,7 +74,7 @@ export async function PUT(request, { params }) {
     }
     
     const product = await Product.findByIdAndUpdate(
-      params.id,
+      id,
       productData,
       { new: true, runValidators: true }
     )
@@ -102,8 +104,9 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     await connectDB()
+    const { id } = await params
     
-    const product = await Product.findByIdAndDelete(params.id)
+    const product = await Product.findByIdAndDelete(id)
     
     if (!product) {
       return NextResponse.json(

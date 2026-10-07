@@ -12,10 +12,6 @@ export default function CategoryPage() {
   const [sortBy, setSortBy] = useState('name')
   const [priceRange, setPriceRange] = useState('all')
 
-  useEffect(() => {
-    fetchProducts()
-  }, [params.slug, sortBy, priceRange])
-
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true)
@@ -52,6 +48,10 @@ export default function CategoryPage() {
       setLoading(false)
     }
   }, [params.slug, sortBy, priceRange])
+
+  useEffect(() => {
+    fetchProducts()
+  }, [fetchProducts])
 
   const getCategoryName = (slug) => {
     return slug.charAt(0).toUpperCase() + slug.slice(1)

@@ -7,11 +7,6 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    checkUserAuthentication()
-    fetchUserOrders()
-  }, [])
-
   const checkUserAuthentication = useCallback(() => {
     try {
       const userData = localStorage.getItem('currentUser')
@@ -56,7 +51,12 @@ export default function OrdersPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [checkUserAuthentication])
+
+  useEffect(() => {
+    checkUserAuthentication()
+    fetchUserOrders()
+  }, [checkUserAuthentication, fetchUserOrders])
 
   const formatPrice = (price) => {
     if (!price || isNaN(price)) return '₹0'

@@ -12,10 +12,6 @@ export default function ProductsPage() {
   const [sortBy, setSortBy] = useState('name')
   const [priceRange, setPriceRange] = useState('all')
 
-  useEffect(() => {
-    fetchProducts()
-  }, [currentPage, sortBy, priceRange])
-
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true)
@@ -61,6 +57,10 @@ export default function ProductsPage() {
       setLoading(false)
     }
   }, [currentPage, sortBy, priceRange])
+
+  useEffect(() => {
+    fetchProducts()
+  }, [fetchProducts])
 
   if (loading) return <Loading />
 

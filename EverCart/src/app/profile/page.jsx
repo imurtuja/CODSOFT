@@ -30,8 +30,25 @@ export default function ProfilePage() {
     confirmPassword: ''
   })
 
-  useEffect(() => {
-    checkAuth()
+  const loadAddresses = useCallback(async (userId) => {
+    try {
+      const response = await fetch(`/api/addresses?userId=${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setAddresses(data.addresses || [])
+        console.log('Loaded addresses from API:', data.addresses)
+      } else {
+        console.error('Failed to load addresses:', response.status)
+      }
+    } catch (error) {
+      console.error('Error loading addresses:', error)
+    }
   }, [])
 
   const checkAuth = useCallback(async () => {
@@ -52,28 +69,11 @@ export default function ProfilePage() {
     
     // Load addresses from API
     await loadAddresses(userData._id)
-  }, [])
+  }, [loadAddresses])
 
-  const loadAddresses = async (userId) => {
-    try {
-      const response = await fetch(`/api/addresses?userId=${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setAddresses(data.addresses || [])
-        console.log('Loaded addresses from API:', data.addresses)
-      } else {
-        console.error('Failed to load addresses:', response.status)
-      }
-    } catch (error) {
-      console.error('Error loading addresses:', error)
-    }
-  }
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
 
   const handleProfileUpdate = (e) => {
     e.preventDefault()

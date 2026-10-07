@@ -13,12 +13,6 @@ export default function ProductPage() {
   const [selectedImage, setSelectedImage] = useState(0)
   const [showViewCart, setShowViewCart] = useState(false)
 
-  useEffect(() => {
-    if (params.id) {
-      fetchProduct()
-    }
-  }, [params.id])
-
   const fetchProduct = useCallback(async () => {
     try {
       const response = await fetch(`/api/products/${params.id}`)
@@ -32,6 +26,12 @@ export default function ProductPage() {
       setLoading(false)
     }
   }, [params.id])
+
+  useEffect(() => {
+    if (params.id) {
+      fetchProduct()
+    }
+  }, [params.id, fetchProduct])
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-IN', {

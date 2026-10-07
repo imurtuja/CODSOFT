@@ -150,13 +150,6 @@ export default function CheckoutPage() {
     }
   }, [])
 
-  useEffect(() => {
-    if (isLoggedIn && userData) {
-      loadAddresses()
-    }
-  }, [isLoggedIn, userData])
-
-
   const loadCart = () => {
     try {
       const cart = JSON.parse(localStorage.getItem('cart') || '[]')
@@ -208,6 +201,12 @@ export default function CheckoutPage() {
       console.error('Error loading addresses:', error)
     }
   }, [isLoggedIn, userData])
+
+  useEffect(() => {
+    if (isLoggedIn && userData) {
+      loadAddresses()
+    }
+  }, [isLoggedIn, userData, loadAddresses])
 
   const saveAddress = async () => {
     if (!isLoggedIn || !userData) {

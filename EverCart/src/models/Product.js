@@ -24,7 +24,9 @@ const productSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
   }],
   created: { type: Date, default: Date.now },
-  updated: { type: Date, default: Date.now }
+  updated: { type: Date, default: Date.now },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 })
 
 productSchema.index({ name: 'text', description: 'text', brand: 'text' })

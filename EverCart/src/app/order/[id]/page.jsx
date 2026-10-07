@@ -9,12 +9,6 @@ export default function OrderDetailsPage() {
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (params.id) {
-      loadOrder()
-    }
-  }, [params.id])
-
   const loadOrder = useCallback(async () => {
     try {
       const response = await fetch(`/api/orders/${params.id}`)
@@ -34,6 +28,12 @@ export default function OrderDetailsPage() {
       setLoading(false)
     }
   }, [params.id])
+
+  useEffect(() => {
+    if (params.id) {
+      loadOrder()
+    }
+  }, [params.id, loadOrder])
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-IN', {

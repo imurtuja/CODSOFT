@@ -61,6 +61,26 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'in.jbl.com'
+      },
+      {
+        protocol: 'https',
+        hostname: 'store.in.panasonic.com'
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.oneplus.in'
+      },
+      {
+        protocol: 'https',
+        hostname: 'in.canon'
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.sony.net'
+      },
+      {
+        protocol: 'https',
+        hostname: 'store.google.com'
       }
     ]
   },

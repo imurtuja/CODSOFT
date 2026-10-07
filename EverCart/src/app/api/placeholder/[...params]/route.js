@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 
 export async function GET(request, { params }) {
-  const [width, height] = params.params
+  const resolvedParams = await params
+  const [width, height] = resolvedParams?.params || []
   
   const w = parseInt(width) || 300
   const h = parseInt(height) || 300

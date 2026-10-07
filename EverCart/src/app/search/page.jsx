@@ -15,16 +15,6 @@ function SearchPageContent() {
   const [sortBy, setSortBy] = useState('name')
   const [priceRange, setPriceRange] = useState('all')
 
-  useEffect(() => {
-    const query = searchParams.get('q')
-    if (query) {
-      setSearchQuery(query)
-      fetchProducts(query)
-    } else {
-      setLoading(false)
-    }
-  }, [searchParams, currentPage, sortBy, priceRange])
-
   const fetchProducts = useCallback(async (query) => {
     try {
       setLoading(true)
@@ -62,6 +52,16 @@ function SearchPageContent() {
       setLoading(false)
     }
   }, [currentPage, sortBy, priceRange])
+
+  useEffect(() => {
+    const query = searchParams.get('q')
+    if (query) {
+      setSearchQuery(query)
+      fetchProducts(query)
+    } else {
+      setLoading(false)
+    }
+  }, [searchParams, fetchProducts])
 
   if (loading) return <Loading />
 
