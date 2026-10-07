@@ -1,6 +1,21 @@
 import { NextResponse } from 'next/server'
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+  'Access-Control-Allow-Headers': 'X-Requested-With, Content-Type, Authorization, rsc, next-router-state-tree, next-router-prefetch, next-url',
+  'Access-Control-Max-Age': '86400',
+}
+
 export function middleware(request) {
+  // Handle CORS preflight requests immediately
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, {
+      status: 204,
+      headers: CORS_HEADERS,
+    })
+  }
+
   const host = request.headers.get('host') || request.nextUrl.host || ''
   const { pathname } = request.nextUrl
 
@@ -29,22 +44,41 @@ export function middleware(request) {
     // 1. Root path '/' on admin subdomain renders the Admin Dashboard
     // The browser URL remains admin.evercart.murtuja.in without /admin
     if (pathname === '/') {
-      return NextResponse.rewrite(new URL('/admin', request.url))
+      const response = NextResponse.rewrite(new URL('/admin', request.url))
+      Object.entries(CORS_HEADERS).forEach(([k, v]) => response.headers.set(k, v))
+      return response
     }
 
     // 2. Explicit '/admin' on admin subdomain redirects cleanly to root '/'
     if (pathname === '/admin' || pathname === '/admin/') {
       const cleanUrl = new URL('/', request.url)
       cleanUrl.search = request.nextUrl.search
-      return NextResponse.redirect(cleanUrl)
+      const response = NextResponse.redirect(cleanUrl)
+      Object.entries(CORS_HEADERS).forEach(([k, v]) => response.headers.set(k, v))
+      return response
     }
 
-    // 3. ANY OTHER PAGE on admin subdomain (e.g. /category/electronics, /products, /cart, /checkout, etc.)
+    // 3. Next.js internal RSC payload / prefetch fetch requests for non-root routes on admin:
+    // Do NOT redirect an RSC fetch across origins! A cross-origin redirected RSC fetch triggers
+    // browser CORS violations and breaks router prefetching. Return a clean 204 response.
+    const isRsc = request.nextUrl.searchParams.has('_rsc') || 
+                  request.headers.has('rsc') || 
+                  request.headers.has('next-router-prefetch')
+    if (isRsc) {
+      return new NextResponse(null, {
+        status: 204,
+        headers: CORS_HEADERS,
+      })
+    }
+
+    // 4. ANY OTHER PAGE on admin subdomain (e.g. /category/electronics, /products, /cart, /checkout, etc.)
     // admin.evercart.murtuja.in is ONLY for the admin page!
-    // Redirect all storefront requests back to the main domain.
+    // Redirect normal browser navigation back to the main domain.
     const targetMainUrl = new URL(pathname, mainOrigin)
     targetMainUrl.search = request.nextUrl.search
-    return NextResponse.redirect(targetMainUrl)
+    const response = NextResponse.redirect(targetMainUrl)
+    Object.entries(CORS_HEADERS).forEach(([k, v]) => response.headers.set(k, v))
+    return response
   }
 
   // On the main domain (e.g. evercart.murtuja.in or localhost:3000):
@@ -52,10 +86,14 @@ export function middleware(request) {
   if (pathname === '/admin' || pathname === '/admin/' || pathname.startsWith('/admin/')) {
     const redirectUrl = new URL('/', adminOrigin)
     redirectUrl.search = request.nextUrl.search
-    return NextResponse.redirect(redirectUrl)
+    const response = NextResponse.redirect(redirectUrl)
+    Object.entries(CORS_HEADERS).forEach(([k, v]) => response.headers.set(k, v))
+    return response
   }
 
-  return NextResponse.next()
+  const response = NextResponse.next()
+  Object.entries(CORS_HEADERS).forEach(([k, v]) => response.headers.set(k, v))
+  return response
 }
 
 export const config = {

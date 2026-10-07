@@ -1,7 +1,43 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
+  const [isOnAdmin, setIsOnAdmin] = useState(false)
+
+  useEffect(() => {
+    setIsOnAdmin(typeof window !== 'undefined' && window.location.host.startsWith('admin.'))
+  }, [])
+
+  const getMainUrl = (path = '') => {
+    if (typeof window === 'undefined') return path
+    const host = window.location.host
+    if (host.startsWith('admin.')) {
+      const protocol = window.location.protocol
+      if (host.includes('localhost')) {
+        return `${protocol}//${host.replace(/^admin\./, '')}${path}`
+      }
+      return `https://evercart.murtuja.in${path}`
+    }
+    return path
+  }
+
+  const renderLink = (href, label, className) => {
+    if (isOnAdmin) {
+      return (
+        <a href={getMainUrl(href)} className={className}>
+          {label}
+        </a>
+      )
+    }
+    return (
+      <Link href={href} prefetch={false} className={className}>
+        {label}
+      </Link>
+    )
+  }
 
   return (
     <footer className="bg-gray-900 text-white">
@@ -15,10 +51,10 @@ export default function Footer() {
               <div>
                 <h3 className="text-base sm:text-lg font-semibold mb-4 text-white">Shop</h3>
                 <ul className="space-y-3">
-                  <li><Link href="/categories" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">Categories</Link></li>
-                  <li><Link href="/products" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">All Products</Link></li>
-                  <li><Link href="/cart" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">Shopping Cart</Link></li>
-                  <li><Link href="/orders" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">My Orders</Link></li>
+                  <li>{renderLink('/categories', 'Categories', 'text-gray-400 hover:text-white transition-colors text-sm sm:text-base')}</li>
+                  <li>{renderLink('/products', 'All Products', 'text-gray-400 hover:text-white transition-colors text-sm sm:text-base')}</li>
+                  <li>{renderLink('/cart', 'Shopping Cart', 'text-gray-400 hover:text-white transition-colors text-sm sm:text-base')}</li>
+                  <li>{renderLink('/orders', 'My Orders', 'text-gray-400 hover:text-white transition-colors text-sm sm:text-base')}</li>
                 </ul>
               </div>
 
@@ -26,10 +62,10 @@ export default function Footer() {
               <div>
                 <h3 className="text-base sm:text-lg font-semibold mb-4 text-white">Support</h3>
                 <ul className="space-y-3">
-                  <li><Link href="/contact" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">Contact Us</Link></li>
-                  <li><Link href="/help" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">Help Center</Link></li>
-                  <li><Link href="/shipping" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">Shipping Info</Link></li>
-                  <li><Link href="/returns" className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base">Returns & Refunds</Link></li>
+                  <li>{renderLink('/contact', 'Contact Us', 'text-gray-400 hover:text-white transition-colors text-sm sm:text-base')}</li>
+                  <li>{renderLink('/help', 'Help Center', 'text-gray-400 hover:text-white transition-colors text-sm sm:text-base')}</li>
+                  <li>{renderLink('/shipping', 'Shipping Info', 'text-gray-400 hover:text-white transition-colors text-sm sm:text-base')}</li>
+                  <li>{renderLink('/returns', 'Returns & Refunds', 'text-gray-400 hover:text-white transition-colors text-sm sm:text-base')}</li>
                 </ul>
               </div>
             </div>
@@ -37,12 +73,21 @@ export default function Footer() {
 
           {/* Company Info / Website Branding (Order 2 on mobile, Order 1 on desktop) */}
           <div className="order-2 lg:order-1 max-w-md w-full">
-            <Link href="/" className="inline-flex items-center space-x-2 mb-4 group">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-                <span className="text-black font-bold text-sm">EC</span>
-              </div>
-              <span className="text-xl font-bold tracking-tight">EverCart</span>
-            </Link>
+            {isOnAdmin ? (
+              <a href={getMainUrl('/')} className="inline-flex items-center space-x-2 mb-4 group">
+                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <span className="text-black font-bold text-sm">EC</span>
+                </div>
+                <span className="text-xl font-bold tracking-tight">EverCart</span>
+              </a>
+            ) : (
+              <Link href="/" prefetch={false} className="inline-flex items-center space-x-2 mb-4 group">
+                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <span className="text-black font-bold text-sm">EC</span>
+                </div>
+                <span className="text-xl font-bold tracking-tight">EverCart</span>
+              </Link>
+            )}
             <p className="text-gray-400 mb-6 text-sm sm:text-base leading-relaxed">
               Your trusted destination for premium electronics and cutting-edge gadgets. 
               Quality products with exceptional service.
@@ -93,8 +138,8 @@ export default function Footer() {
               © {currentYear} EverCart. All rights reserved.
             </p>
             <div className="flex space-x-6">
-              <Link href="/privacy" className="text-gray-400 hover:text-white text-sm transition-colors">Privacy Policy</Link>
-              <Link href="/terms" className="text-gray-400 hover:text-white text-sm transition-colors">Terms of Service</Link>
+              {renderLink('/privacy', 'Privacy Policy', 'text-gray-400 hover:text-white text-sm transition-colors')}
+              {renderLink('/terms', 'Terms of Service', 'text-gray-400 hover:text-white text-sm transition-colors')}
             </div>
           </div>
         </div>

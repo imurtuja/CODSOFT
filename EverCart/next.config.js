@@ -84,6 +84,18 @@ const nextConfig = {
       }
     ]
   },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS, PATCH' },
+          { key: 'Access-Control-Allow-Headers', value: 'X-Requested-With, Content-Type, Authorization, rsc, next-router-state-tree, next-router-prefetch, next-url' },
+        ],
+      },
+    ]
+  },
   // Suppress console errors in production
   webpack: (config, { dev, isServer }) => {
     if (!dev && !isServer) {
