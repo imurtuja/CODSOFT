@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server'
 import connectDB from '../../../lib/mongodb.js'
 import Product from '../../../models/Product.js'
 
+function escapeRegex(text) {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
+}
+
 export async function GET(request) {
   try {
     await connectDB()
@@ -10,8 +14,13 @@ export async function GET(request) {
     const category = searchParams.get('category')
     const search = searchParams.get('search')
     const featured = searchParams.get('featured') === 'true'
-    const limit = parseInt(searchParams.get('limit') || '20')
-    const page = parseInt(searchParams.get('page') || '1')
+    
+    // Validate and clamp pagination to prevent DoS
+    const rawLimit = parseInt(searchParams.get('limit') || '20', 10)
+    const limit = Math.min(Math.max(isNaN(rawLimit) ? 20 : rawLimit, 1), 50)
+    const rawPage = parseInt(searchParams.get('page') || '1', 10)
+    const page = Math.max(isNaN(rawPage) ? 1 : rawPage, 1)
+    
     const sort = searchParams.get('sort') || 'createdAt'
     const minPrice = searchParams.get('minPrice')
     const maxPrice = searchParams.get('maxPrice')
@@ -23,30 +32,32 @@ export async function GET(request) {
       query.isFeatured = true
     }
     
-    // Filter by category
-    if (category) {
-      query.category = { $regex: new RegExp(category, 'i') }
+    // Safe category filter (prevent ReDoS)
+    if (category && category.trim()) {
+      const safeCat = escapeRegex(category.trim())
+      query.category = { $regex: new RegExp(`^${safeCat}$`, 'i') }
     }
     
-    // Filter by search query
-    if (search) {
+    // Safe search filter
+    if (search && search.trim()) {
+      const safeSearch = escapeRegex(search.trim())
+      const searchRegex = new RegExp(safeSearch, 'i')
       query.$or = [
-        { name: { $regex: new RegExp(search, 'i') } },
-        { description: { $regex: new RegExp(search, 'i') } },
-        { brand: { $regex: new RegExp(search, 'i') } },
-        { tags: { $in: [new RegExp(search, 'i')] } }
+        { name: { $regex: searchRegex } },
+        { description: { $regex: searchRegex } },
+        { brand: { $regex: searchRegex } },
+        { tags: { $in: [searchRegex] } }
       ]
     }
     
     // Filter by price range
-    if (minPrice || maxPrice) {
+    const parsedMin = parseInt(minPrice, 10)
+    const parsedMax = parseInt(maxPrice, 10)
+    if (!isNaN(parsedMin) || !isNaN(parsedMax)) {
       query.price = {}
-      if (minPrice) query.price.$gte = parseInt(minPrice)
-      if (maxPrice) query.price.$lte = parseInt(maxPrice)
+      if (!isNaN(parsedMin) && parsedMin >= 0) query.price.$gte = parsedMin
+      if (!isNaN(parsedMax) && parsedMax >= 0) query.price.$lte = parsedMax
     }
-    
-    // Get total count for pagination
-    const total = await Product.countDocuments(query)
     
     // Build sort object
     let sortObj = { createdAt: -1 }
@@ -60,20 +71,30 @@ export async function GET(request) {
       sortObj = { rating: -1 }
     }
     
-    // Get products with pagination
-    const products = await Product.find(query)
-      .select('-reviews')
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .sort(sortObj)
-      .lean()
+    // Run count and data query concurrently in parallel
+    const [total, products] = await Promise.all([
+      Product.countDocuments(query),
+      Product.find(query)
+        .select('-reviews -features -specifications -sources')
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .sort(sortObj)
+        .lean()
+    ])
     
-    return NextResponse.json({
-      products,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit)
-    })
+    return NextResponse.json(
+      {
+        products,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit)
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        }
+      }
+    )
     
   } catch (error) {
     console.error('Error fetching products:', error)

@@ -30,5 +30,9 @@ const productSchema = new mongoose.Schema({
 })
 
 productSchema.index({ name: 'text', description: 'text', brand: 'text' })
+productSchema.index({ status: 1, isFeatured: 1, createdAt: -1 })
+productSchema.index({ status: 1, category: 1, price: 1 })
+productSchema.index({ status: 1, price: 1 })
+productSchema.index({ status: 1, createdAt: -1 })
 
 export default mongoose.models.Product || mongoose.model('Product', productSchema)

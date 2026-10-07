@@ -19,7 +19,7 @@ export default function Home() {
 
   const fetchFeaturedProducts = useCallback(async () => {
     setLoading(true)
-    const response = await fetch(`${window.location.origin}/api/products?featured=true&limit=4`)
+    const response = await fetch('/api/products?featured=true&limit=4')
     const data = await response.json()
     const products = data.products || []
     const featured = products.filter(product => product.isFeatured === true)

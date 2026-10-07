@@ -25,7 +25,11 @@ export async function GET() {
       { $sort: { name: 1 } }
     ])
     
-    return NextResponse.json(categories)
+    return NextResponse.json(categories, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=1800',
+      }
+    })
     
   } catch (error) {
     console.error('Error fetching categories:', error)

@@ -111,9 +111,11 @@ export default function CategoryPage() {
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {products.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="flex flex-wrap justify-center gap-6">
               {products.map((product) => (
-                <ProductCard key={product._id} product={product} />
+                <div key={product._id} className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] max-w-sm flex flex-col">
+                  <ProductCard product={product} />
+                </div>
               ))}
             </div>
           ) : (

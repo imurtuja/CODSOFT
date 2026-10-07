@@ -7,7 +7,7 @@ export async function GET(request, { params }) {
     await connectDB()
     const { id } = await params
     
-    const product = await Product.findById(id)
+    const product = await Product.findById(id).lean()
     
     if (!product) {
       return NextResponse.json(
@@ -16,7 +16,11 @@ export async function GET(request, { params }) {
       )
     }
     
-    return NextResponse.json(product)
+    return NextResponse.json(product, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600',
+      }
+    })
     
   } catch (error) {
     console.error('Error fetching product:', error)
