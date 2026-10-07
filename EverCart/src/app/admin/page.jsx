@@ -3,8 +3,11 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import Loading from '../../components/Loading'
+import NotFoundView from '../../components/NotFoundView'
 
 export default function AdminPage() {
+  const [isAuthorized, setIsAuthorized] = useState(false)
+  const [authChecking, setAuthChecking] = useState(true)
   const [activeTab, setActiveTab] = useState('products')
   const [products, setProducts] = useState([])
   const [orders, setOrders] = useState([])
@@ -32,22 +35,57 @@ export default function AdminPage() {
   })
 
   const checkAuth = useCallback(() => {
-    const user = localStorage.getItem('currentUser')
-    if (!user) {
-      alert('Please login to access admin panel')
-      window.location.href = '/login'
-      return
-    }
+    if (typeof window === 'undefined') return false
+
+    // Check if auth_transfer is in URL params
+    const urlParams = new URLSearchParams(window.location.search)
+    const authTransfer = urlParams.get('auth_transfer')
+    const userDataParam = urlParams.get('user_data')
     
-    const userData = JSON.parse(user)
-    if (userData.role !== 'admin') {
-      alert('Access denied. Admin privileges required.')
-      window.location.href = '/'
-      return
+    if (authTransfer && userDataParam) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(userDataParam))
+        if (parsed && (parsed.role === 'admin' || parsed.email === 'admin@evercart.com')) {
+          localStorage.setItem('token', decodeURIComponent(authTransfer))
+          localStorage.setItem('currentUser', JSON.stringify(parsed))
+          localStorage.setItem('user', JSON.stringify(parsed))
+          window.history.replaceState({}, '', window.location.pathname)
+          setIsAuthorized(true)
+          setAuthChecking(false)
+          return true
+        }
+      } catch (e) {
+        console.error('Failed to parse auth transfer data:', e)
+      }
     }
+
+    const user = localStorage.getItem('currentUser')
+    if (user) {
+      try {
+        const userData = JSON.parse(user)
+        if (userData.role === 'admin' || userData.email === 'admin@evercart.com') {
+          setIsAuthorized(true)
+          setAuthChecking(false)
+          return true
+        }
+      } catch (e) {
+        console.error('Failed to parse user data:', e)
+      }
+    }
+
+    // User is not an admin: show 404
+    setIsAuthorized(false)
+    setAuthChecking(false)
+    return false
   }, [])
 
   const loadData = useCallback(async () => {
+    const authorized = checkAuth()
+    if (!authorized) {
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       if (activeTab === 'products') {
@@ -64,7 +102,7 @@ export default function AdminPage() {
     } finally {
       setLoading(false)
     }
-  }, [activeTab])
+  }, [activeTab, checkAuth])
 
   useEffect(() => {
     checkAuth()
@@ -193,6 +231,14 @@ export default function AdminPage() {
       currency: 'INR',
       maximumFractionDigits: 0,
     }).format(price)
+  }
+
+  if (authChecking) {
+    return <Loading />
+  }
+
+  if (!isAuthorized) {
+    return <NotFoundView />
   }
 
   if (loading) return <Loading />

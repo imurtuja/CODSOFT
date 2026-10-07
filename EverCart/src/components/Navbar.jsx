@@ -48,8 +48,50 @@ export default function Navbar() {
     setCartCount(count)
   }
 
+  const getAdminUrl = () => {
+    if (typeof window === 'undefined') return 'https://admin.evercart.murtuja.in'
+    const host = window.location.host
+    const protocol = window.location.protocol
+    if (host.startsWith('admin.')) {
+      return '/'
+    }
+    if (host.includes('evercart.murtuja.in')) {
+      return 'https://admin.evercart.murtuja.in'
+    }
+    if (host.includes('localhost')) {
+      return `${protocol}//admin.${host}`
+    }
+    return 'https://admin.evercart.murtuja.in'
+  }
+
+  const handleAdminNavigate = (e) => {
+    e.preventDefault()
+    const targetUrl = getAdminUrl()
+    if (targetUrl === '/') {
+      router.push('/')
+      return
+    }
+
+    try {
+      const user = localStorage.getItem('currentUser')
+      const token = localStorage.getItem('token')
+      if (user && token) {
+        const u = encodeURIComponent(user)
+        const t = encodeURIComponent(token)
+        window.location.href = `${targetUrl}/?auth_transfer=${t}&user_data=${u}`
+        return
+      }
+    } catch (err) {
+      console.error(err)
+    }
+
+    window.location.href = targetUrl
+  }
+
   const handleLogout = () => {
     localStorage.removeItem('currentUser')
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
     setIsLoggedIn(false)
     setUserData(null)
     // Dispatch event to notify other components of logout
@@ -125,9 +167,13 @@ export default function Navbar() {
                     My Orders
                   </Link>
                   {isAdmin && (
-                    <Link href="/admin" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                    <a 
+                      href={typeof window !== 'undefined' ? getAdminUrl() : 'https://admin.evercart.murtuja.in'}
+                      onClick={handleAdminNavigate}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                    >
                       Admin Panel
-                    </Link>
+                    </a>
                   )}
                   <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg">
                     Logout
@@ -226,13 +272,16 @@ export default function Navbar() {
                       Profile
                     </Link>
                     {isAdmin && (
-                      <Link 
-                        href="/admin" 
-                        className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
-                        onClick={() => setIsMobileMenuOpen(false)}
+                      <a 
+                        href={typeof window !== 'undefined' ? getAdminUrl() : 'https://admin.evercart.murtuja.in'}
+                        onClick={(e) => {
+                          setIsMobileMenuOpen(false)
+                          handleAdminNavigate(e)
+                        }}
+                        className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg cursor-pointer"
                       >
                         Admin Panel
-                      </Link>
+                      </a>
                     )}
                     <button
                       onClick={() => {
