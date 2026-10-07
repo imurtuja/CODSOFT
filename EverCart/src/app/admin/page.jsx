@@ -447,12 +447,16 @@ export default function AdminPage() {
                               </div>
                             </td>
                             <td className="px-4 py-3 text-sm font-medium">
-                              <Link
-                                href={`/order/${order._id}`}
+                              <a
+                                href={typeof window !== 'undefined' && window.location.host.startsWith('admin.')
+                                  ? `https://evercart.murtuja.in/order/${order._id}`
+                                  : `/order/${order._id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="text-blue-600 hover:text-blue-900 text-sm"
                               >
-                                View Details
-                              </Link>
+                                View Details ↗
+                              </a>
                             </td>
                           </tr>
                         ))}

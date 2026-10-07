@@ -10,9 +10,11 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isOnAdmin, setIsOnAdmin] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
+    setIsOnAdmin(typeof window !== 'undefined' && window.location.host.startsWith('admin.'))
     checkAuth()
     loadCart()
     
@@ -46,6 +48,16 @@ export default function Navbar() {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]')
     const count = cart.reduce((total, item) => total + (item.quantity || 0), 0)
     setCartCount(count)
+  }
+
+  const getMainUrl = (path = '') => {
+    if (typeof window === 'undefined') return `https://evercart.murtuja.in${path}`
+    const host = window.location.host
+    const protocol = window.location.protocol
+    if (host.includes('localhost')) {
+      return `${protocol}//${host.replace(/^admin\./, '')}${path}`
+    }
+    return `https://evercart.murtuja.in${path}`
   }
 
   const getAdminUrl = () => {
@@ -96,13 +108,21 @@ export default function Navbar() {
     setUserData(null)
     // Dispatch event to notify other components of logout
     window.dispatchEvent(new CustomEvent('userLoggedOut'))
-    router.push('/')
+    if (isOnAdmin) {
+      window.location.href = getMainUrl('/')
+    } else {
+      router.push('/')
+    }
   }
 
   const handleSearch = (e) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      if (isOnAdmin) {
+        window.location.href = getMainUrl(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      } else {
+        router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      }
       setSearchQuery('')
     }
   }
@@ -112,18 +132,45 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo and Categories */}
-          <div className="flex items-center space-x-8">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">EC</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">EverCart</span>
-            </Link>
+          <div className="flex items-center space-x-6 sm:space-x-8">
+            {isOnAdmin ? (
+              <a href={getMainUrl('/')} className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">EC</span>
+                </div>
+                <span className="text-xl font-bold text-gray-900">EverCart</span>
+                <span className="text-xs font-semibold px-2 py-0.5 bg-black text-white rounded">Admin</span>
+              </a>
+            ) : (
+              <Link href="/" className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">EC</span>
+                </div>
+                <span className="text-xl font-bold text-gray-900">EverCart</span>
+              </Link>
+            )}
             
             <div className="hidden md:flex items-center space-x-6">
-              <Link href="/categories" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">
-                Categories
-              </Link>
+              {isOnAdmin ? (
+                <>
+                  <a 
+                    href={getMainUrl('/')} 
+                    className="text-gray-700 hover:text-gray-900 font-medium transition-colors flex items-center space-x-1"
+                  >
+                    <span>View Store ↗</span>
+                  </a>
+                  <a 
+                    href={getMainUrl('/categories')} 
+                    className="text-gray-700 hover:text-gray-900 font-medium transition-colors"
+                  >
+                    Categories
+                  </a>
+                </>
+              ) : (
+                <Link href="/categories" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">
+                  Categories
+                </Link>
+              )}
             </div>
           </div>
 
@@ -147,9 +194,15 @@ export default function Navbar() {
 
           {/* Right Navigation */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link href="/orders" className="text-gray-700 hover:text-gray-900 font-medium px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-              Orders
-            </Link>
+            {isOnAdmin ? (
+              <a href={getMainUrl('/orders')} className="text-gray-700 hover:text-gray-900 font-medium px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                Orders
+              </a>
+            ) : (
+              <Link href="/orders" className="text-gray-700 hover:text-gray-900 font-medium px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                Orders
+              </Link>
+            )}
             
             {isLoggedIn ? (
               <div className="relative group">
@@ -160,12 +213,25 @@ export default function Navbar() {
                   <span>Profile</span>
                 </button>
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                  <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">
-                    My Profile
-                  </Link>
-                  <Link href="/orders" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    My Orders
-                  </Link>
+                  {isOnAdmin ? (
+                    <>
+                      <a href={getMainUrl('/profile')} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">
+                        My Profile
+                      </a>
+                      <a href={getMainUrl('/orders')} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        My Orders
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">
+                        My Profile
+                      </Link>
+                      <Link href="/orders" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        My Orders
+                      </Link>
+                    </>
+                  )}
                   {isAdmin && (
                     <a 
                       href={typeof window !== 'undefined' ? getAdminUrl() : 'https://admin.evercart.murtuja.in'}
@@ -182,25 +248,51 @@ export default function Navbar() {
               </div>
             ) : (
               <>
-                <Link href="/login" className="text-gray-700 hover:text-gray-900 font-medium px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-                  Login
-                </Link>
-                <Link href="/signup" className="bg-black text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors">
-                  Sign Up
-                </Link>
+                {isOnAdmin ? (
+                  <>
+                    <a href={getMainUrl('/login')} className="text-gray-700 hover:text-gray-900 font-medium px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                      Login
+                    </a>
+                    <a href={getMainUrl('/signup')} className="bg-black text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors">
+                      Sign Up
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login" className="text-gray-700 hover:text-gray-900 font-medium px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                      Login
+                    </Link>
+                    <Link href="/signup" className="bg-black text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors">
+                      Sign Up
+                    </Link>
+                  </>
+                )}
               </>
             )}
             
-            <Link href="/cart" className="relative p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                  {cartCount > 99 ? '99+' : cartCount}
-                </span>
-              )}
-            </Link>
+            {isOnAdmin ? (
+              <a href={getMainUrl('/cart')} className="relative p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                )}
+              </a>
+            ) : (
+              <Link href="/cart" className="relative p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                )}
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -240,37 +332,82 @@ export default function Navbar() {
 
               {/* Mobile Menu Items */}
               <div className="space-y-2">
-                <Link 
-                  href="/categories" 
-                  className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Categories
-                </Link>
-                <Link 
-                  href="/products" 
-                  className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  All Products
-                </Link>
-                <Link 
-                  href="/orders" 
-                  className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Orders
-                </Link>
-                
-                {isLoggedIn ? (
+                {isOnAdmin ? (
                   <>
-                    <Link 
-                      href="/profile" 
+                    <a 
+                      href={getMainUrl('/')} 
+                      className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      View Store ↗
+                    </a>
+                    <a 
+                      href={getMainUrl('/categories')} 
                       className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      Profile
+                      Categories
+                    </a>
+                    <a 
+                      href={getMainUrl('/products')} 
+                      className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      All Products
+                    </a>
+                    <a 
+                      href={getMainUrl('/orders')} 
+                      className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Orders
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    <Link 
+                      href="/categories" 
+                      className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Categories
                     </Link>
+                    <Link 
+                      href="/products" 
+                      className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      All Products
+                    </Link>
+                    <Link 
+                      href="/orders" 
+                      className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Orders
+                    </Link>
+                  </>
+                )}
+                
+                {isLoggedIn ? (
+                  <>
+                    {isOnAdmin ? (
+                      <a 
+                        href={getMainUrl('/profile')} 
+                        className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Profile
+                      </a>
+                    ) : (
+                      <Link 
+                        href="/profile" 
+                        className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Profile
+                      </Link>
+                    )}
                     {isAdmin && (
                       <a 
                         href={typeof window !== 'undefined' ? getAdminUrl() : 'https://admin.evercart.murtuja.in'}
@@ -295,20 +432,41 @@ export default function Navbar() {
                   </>
                 ) : (
                   <>
-                    <Link 
-                      href="/login" 
-                      className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Login
-                    </Link>
-                    <Link 
-                      href="/signup" 
-                      className="block px-3 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Sign Up
-                    </Link>
+                    {isOnAdmin ? (
+                      <>
+                        <a 
+                          href={getMainUrl('/login')} 
+                          className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Login
+                        </a>
+                        <a 
+                          href={getMainUrl('/signup')} 
+                          className="block px-3 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Sign Up
+                        </a>
+                      </>
+                    ) : (
+                      <>
+                        <Link 
+                          href="/login" 
+                          className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Login
+                        </Link>
+                        <Link 
+                          href="/signup" 
+                          className="block px-3 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Sign Up
+                        </Link>
+                      </>
+                    )}
                   </>
                 )}
               </div>
