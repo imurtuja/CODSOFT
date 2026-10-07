@@ -58,8 +58,11 @@ function ProductCard({ product }) {
   const imageUrl = product.images?.[0] || product.image || ''
   
   const isBadUrl = (url) => {
-    if (!url) return true
-    return url.includes('i.dell.com') || url.includes('404')
+    if (!url || typeof url !== 'string') return true
+    return url.includes('i.dell.com') || 
+           url.includes('404') || 
+           url.includes('store.google.com') || 
+           url.includes('store.dji.com/pocket')
   }
 
   return (

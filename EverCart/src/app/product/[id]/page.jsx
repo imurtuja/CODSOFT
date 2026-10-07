@@ -12,6 +12,7 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1)
   const [selectedImage, setSelectedImage] = useState(0)
   const [showViewCart, setShowViewCart] = useState(false)
+  const [imageError, setImageError] = useState(false)
 
   const fetchProduct = useCallback(async () => {
     try {
@@ -113,13 +114,14 @@ export default function ProductPage() {
           {/* Images */}
           <div>
             <div className="aspect-w-1 aspect-h-1 w-full mb-4">
-              {images.length > 0 ? (
+              {images.length > 0 && !imageError ? (
                 <Image
                   src={images[selectedImage]}
                   alt={product.name}
                   width={600}
                   height={600}
                   className="w-full h-96 object-cover rounded-lg"
+                  onError={() => setImageError(true)}
                 />
               ) : (
                 <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">

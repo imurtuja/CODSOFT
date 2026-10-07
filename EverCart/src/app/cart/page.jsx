@@ -6,6 +6,7 @@ import Image from 'next/image'
 export default function CartPage() {
   const [cartItems, setCartItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [failedImages, setFailedImages] = useState({})
 
   useEffect(() => {
     loadCart()
@@ -122,13 +123,14 @@ export default function CartPage() {
                 <div key={item.id} className={`p-6 ${index !== cartItems.length - 1 ? 'border-b border-gray-200' : ''}`}>
                   <div className="flex items-center">
                     <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
-                      {item.image ? (
+                      {item.image && !failedImages[item.id] ? (
                         <Image
                           src={item.image}
                           alt={item.name}
                           width={96}
                           height={96}
                           className="w-full h-full object-cover"
+                          onError={() => setFailedImages(prev => ({ ...prev, [item.id]: true }))}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl">

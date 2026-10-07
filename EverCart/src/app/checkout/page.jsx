@@ -27,6 +27,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [paymentStatus, setPaymentStatus] = useState(null)
   const [paymentMessage, setPaymentMessage] = useState('')
+  const [failedImages, setFailedImages] = useState({})
 
   useEffect(() => {
     // Suppress all development console errors and warnings
@@ -710,13 +711,20 @@ export default function CheckoutPage() {
               <div className="space-y-4">
                 {cartItems.map((item, index) => (
                   <div key={index} className="flex items-center space-x-4">
-                    <Image
-                      src={item.image || '/placeholder-product.jpg'}
-                      alt={item.name}
-                      width={64}
-                      height={64}
-                      className="w-16 h-16 object-cover rounded"
-                    />
+                    <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {item.image && !failedImages[item.id || index] ? (
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          width={64}
+                          height={64}
+                          className="w-16 h-16 object-cover"
+                          onError={() => setFailedImages(prev => ({ ...prev, [item.id || index]: true }))}
+                        />
+                      ) : (
+                        <span className="text-xl">📦</span>
+                      )}
+                    </div>
                     <div className="flex-1">
                       <h3 className="font-medium text-sm">{item.name}</h3>
                       <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
