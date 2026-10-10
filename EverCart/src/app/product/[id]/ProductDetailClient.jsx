@@ -11,27 +11,8 @@ import { fetchCached } from '../../../utils/apiCache'
 export default function ProductDetailClient({ initialProduct, productId }) {
   const router = useRouter()
   const currentId = productId || initialProduct?._id || initialProduct?.id
-  const [product, setProduct] = useState(() => {
-    if (initialProduct) return initialProduct
-    if (typeof window === 'undefined') return null
-    try {
-      const pid = currentId || window.location.pathname.split('/').pop()
-      if (pid) {
-        const preview = sessionStorage.getItem(`evercart_preview_${pid}`)
-        if (preview) return JSON.parse(preview)
-      }
-    } catch (e) {}
-    return null
-  })
-  const [loading, setLoading] = useState(() => {
-    if (initialProduct) return false
-    if (typeof window === 'undefined') return true
-    try {
-      const pid = currentId || window.location.pathname.split('/').pop()
-      if (pid && sessionStorage.getItem(`evercart_preview_${pid}`)) return false
-    } catch (e) {}
-    return true
-  })
+  const [product, setProduct] = useState(initialProduct || null)
+  const [loading, setLoading] = useState(!initialProduct)
   const [quantity, setQuantity] = useState(1)
   const [selectedImage, setSelectedImage] = useState(0)
   const [isInCart, setIsInCart] = useState(false)
@@ -80,9 +61,25 @@ export default function ProductDetailClient({ initialProduct, productId }) {
       setProduct(initialProduct)
       setLoading(false)
       setSelectedImage(0)
-    } else if (currentId) {
+      return
+    }
+
+    if (currentId) {
+      // Safe post-hydration preview lookup for instant zero-lag shell
+      try {
+        const preview = sessionStorage.getItem(`evercart_preview_${currentId}`)
+        if (preview) {
+          const parsed = JSON.parse(preview)
+          if (parsed && (parsed._id || parsed.id || parsed.name)) {
+            setProduct(parsed)
+            setLoading(false)
+          }
+        }
+      } catch (e) {}
+
       fetchProduct()
     }
+
     // Prefetch high-intent routes for instant 0ms transition
     router.prefetch('/cart')
     router.prefetch('/checkout')

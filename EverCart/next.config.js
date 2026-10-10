@@ -101,13 +101,18 @@ const nextConfig = {
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'X-XSS-Protection', value: '1; mode=block' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), otp-credentials=*' },
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' },
         ],
       },
     ]
   },
-  // Suppress console errors in production
+  experimental: {
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
+  },
   webpack: (config, { dev, isServer }) => {
     if (!dev && !isServer) {
       config.optimization.minimizer = config.optimization.minimizer || []
@@ -115,7 +120,7 @@ const nextConfig = {
         new (require('terser-webpack-plugin'))({
           terserOptions: {
             compress: {
-              drop_console: true,
+              pure_funcs: ['console.log', 'console.info', 'console.debug'],
               drop_debugger: true,
             },
           },

@@ -1,4 +1,3 @@
-import { Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import ProductCard from '../components/ProductCard'
@@ -102,57 +101,8 @@ async function getHomeData() {
   }
 }
 
-// Targeted Skeletons for Progressive Streaming
-function SpotlightCardSkeleton() {
-  return (
-    <div className="w-full max-w-md bg-white border border-gray-200/90 rounded-2xl overflow-hidden shadow-sm animate-pulse">
-      <div className="relative w-full h-80 sm:h-92 bg-gray-200">
-        <div className="absolute top-4 left-4 w-28 h-6 rounded-full bg-gray-300/80" />
-        <div className="absolute top-4 right-4 w-14 h-6 rounded-full bg-gray-300/80" />
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-b from-transparent via-white/80 to-white" />
-      </div>
-      <div className="relative -mt-20 sm:-mt-24 px-6 pb-6 pt-0 space-y-3 z-10">
-        <div className="flex items-center justify-between">
-          <div className="h-4 w-20 bg-gray-200 rounded" />
-          <div className="h-4 w-32 bg-gray-200 rounded-full" />
-        </div>
-        <div className="h-6 bg-gray-300 rounded-lg w-4/5" />
-        <div className="h-4 bg-gray-200 rounded w-full" />
-        <div className="h-4 bg-gray-200 rounded w-3/4" />
-        <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
-          <div className="space-y-1">
-            <div className="h-3 w-16 bg-gray-200 rounded" />
-            <div className="h-7 w-28 bg-gray-300 rounded-lg" />
-          </div>
-          <div className="h-10 w-32 bg-gray-900/10 rounded-xl" />
-        </div>
-      </div>
-    </div>
-  )
-}
 
-function FeaturedProductsSkeleton() {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
-      {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-        <div key={i} className="bg-white rounded-2xl border border-gray-200/80 p-4 space-y-3">
-          <div className="w-full h-48 bg-gray-100 rounded-xl" />
-          <div className="h-3 w-16 bg-gray-200 rounded" />
-          <div className="h-5 w-full bg-gray-300 rounded-lg" />
-          <div className="h-4 w-3/4 bg-gray-100 rounded" />
-          <div className="pt-2 flex items-center justify-between">
-            <div className="h-6 w-24 bg-gray-300 rounded" />
-            <div className="h-9 w-24 bg-gray-900/10 rounded-xl" />
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-async function SpotlightSection() {
-  const { spotlightProduct } = await getHomeData()
-
+function SpotlightSection({ spotlightProduct }) {
   if (!spotlightProduct) {
     return (
       <div className="w-full max-w-md h-96 bg-white rounded-2xl border border-gray-200/80 flex items-center justify-center text-gray-400 text-sm">
@@ -164,7 +114,7 @@ async function SpotlightSection() {
   return (
     <Link
       href={`/product/${spotlightProduct._id}`}
-      prefetch={true}
+      prefetch={false}
       className="group block w-full max-w-md bg-white border border-gray-200/90 rounded-2xl overflow-hidden shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer"
     >
       {/* Top-to-Middle Faded Image Container */}
@@ -244,9 +194,7 @@ async function SpotlightSection() {
   )
 }
 
-async function FeaturedSection() {
-  const { featuredProducts } = await getHomeData()
-
+function FeaturedSection({ featuredProducts }) {
   if (!featuredProducts || featuredProducts.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500 text-sm">
@@ -264,7 +212,8 @@ async function FeaturedSection() {
   )
 }
 
-export default function Home() {
+export default async function Home() {
+  const { spotlightProduct, featuredProducts } = await getHomeData()
   // Google Structured Data for Organization & SearchAction
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -364,11 +313,9 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Dynamic Spotlight Card with Streaming Suspense */}
+            {/* Right Dynamic Spotlight Card */}
             <div className="lg:col-span-5 flex justify-center">
-              <Suspense fallback={<SpotlightCardSkeleton />}>
-                <SpotlightSection />
-              </Suspense>
+              <SpotlightSection spotlightProduct={spotlightProduct} />
             </div>
           </div>
         </div>
@@ -503,9 +450,7 @@ export default function Home() {
             </Link>
           </div>
 
-          <Suspense fallback={<FeaturedProductsSkeleton />}>
-            <FeaturedSection />
-          </Suspense>
+          <FeaturedSection featuredProducts={featuredProducts} />
         </div>
       </section>
 

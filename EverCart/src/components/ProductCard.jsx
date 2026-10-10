@@ -92,7 +92,7 @@ function ProductCard({ product }) {
       <div className="relative overflow-hidden">
         <Link 
           href={`/product/${product._id || product.id}`} 
-          prefetch={true}
+          prefetch={false}
           onClick={handlePrefetch}
         >
           <div className="aspect-square w-full bg-gray-50/50">
@@ -138,7 +138,7 @@ function ProductCard({ product }) {
         {/* Product Name */}
         <Link 
           href={`/product/${product._id || product.id}`} 
-          prefetch={true}
+          prefetch={false}
           onClick={handlePrefetch}
         >
           <h3 className="text-sm sm:text-base font-bold text-gray-900 leading-snug line-clamp-2 hover:text-black transition-colors mb-1.5">
@@ -183,7 +183,7 @@ function ProductCard({ product }) {
           {isInCart && !justAdded ? (
             <Link
               href="/cart"
-              prefetch={true}
+              prefetch={false}
               className="flex-1 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm whitespace-nowrap active:scale-95"
             >
               <span>✓</span>
@@ -217,7 +217,8 @@ function ProductCard({ product }) {
           )}
           <Link
             href={`/product/${product._id || product.id}`}
-            prefetch={true}
+            prefetch={false}
+            onClick={handlePrefetch}
             className="h-9 px-3 bg-gray-50 text-gray-700 hover:text-black hover:bg-gray-100 border border-gray-200 rounded-lg font-semibold text-xs flex items-center justify-center transition-all whitespace-nowrap active:scale-95"
           >
             View
