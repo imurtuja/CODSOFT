@@ -4,12 +4,20 @@ import Link from 'next/link'
 export default function NotFoundView() {
   const getStorefrontUrl = (path = '/') => {
     if (typeof window === 'undefined') return path
-    const host = window.location.host
-    const protocol = window.location.protocol
+    const host = window.location.host || ''
+    const protocol = window.location.protocol || 'http:'
+    const cleanPath = path.startsWith('/') ? path : `/${path}`
+
+    if (host.includes('localhost') || host.includes('127.0.0.1')) {
+      const cleanHost = host.replace(/^admin\./, '')
+      return `${protocol}//${cleanHost}${cleanPath}`
+    }
+
     if (host.startsWith('admin.')) {
       const cleanHost = host.replace(/^admin\./, '')
-      return `${protocol}//${cleanHost}${path}`
+      return `${protocol}//${cleanHost}${cleanPath}`
     }
+
     return path
   }
 
@@ -20,7 +28,7 @@ export default function NotFoundView() {
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-16 bg-white">
       <div className="max-w-md w-full text-center">
         {/* Subtle 404 tag */}
-        <div className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase bg-gray-100 text-gray-800 mb-6">
+        <div className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase bg-gray-100 text-gray-800 mb-6 select-none cursor-default">
           Error 404
         </div>
 

@@ -267,7 +267,7 @@ export default function CartPage() {
                         {/* Thumbnail */}
                         <Link
                           href={`/product/${item.id}`}
-                          className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-gray-50 border border-gray-200/80 p-2 flex items-center justify-center shrink-0 overflow-hidden group hover:border-gray-900 transition-colors"
+                          className="relative w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center shrink-0 overflow-hidden"
                         >
                           {item.image && !failedImages[item.id] ? (
                             <Image
@@ -275,7 +275,7 @@ export default function CartPage() {
                               alt={item.name}
                               fill
                               unoptimized
-                              className="object-contain p-1 group-hover:scale-105 transition-transform"
+                              className="object-contain"
                               onError={() => setFailedImages((prev) => ({ ...prev, [item.id]: true }))}
                             />
                           ) : (

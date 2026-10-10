@@ -60,26 +60,29 @@ export async function POST(request) {
       user: userWithoutPassword
     })
 
-    // Set cookie for browser sessions (scoped to root domain so admin subdomain also receives it)
+    // Set cookies for browser sessions
     const cookieDomain = getCookieDomain(request)
     const isProd = process.env.NODE_ENV === 'production'
 
-    const cookieOpts = {
+    const cookieBase = {
       path: '/',
       sameSite: 'lax',
-      httpOnly: false,
       secure: isProd,
       maxAge: 7 * 24 * 60 * 60,
-      ...(cookieDomain ? { domain: cookieDomain } : {})
     }
 
-    response.cookies.set('token', token, cookieOpts)
-
+    // 1. Direct host-only cookies (guaranteed on current origin)
+    response.cookies.set('token', token, { ...cookieBase, httpOnly: false })
     if (user.role === 'admin') {
-      response.cookies.set('admin_token', token, {
-        ...cookieOpts,
-        httpOnly: true // Secure HttpOnly for admin token
-      })
+      response.cookies.set('admin_token', token, { ...cookieBase, httpOnly: true })
+    }
+
+    // 2. Cross-subdomain cookies for evercart.murtuja.in
+    if (cookieDomain) {
+      response.cookies.set('token_shared', token, { ...cookieBase, domain: cookieDomain, httpOnly: false })
+      if (user.role === 'admin') {
+        response.cookies.set('admin_token_shared', token, { ...cookieBase, domain: cookieDomain, httpOnly: true })
+      }
     }
     
     return response

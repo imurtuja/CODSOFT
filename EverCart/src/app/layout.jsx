@@ -88,7 +88,10 @@ export default async function RootLayout({ children }) {
   if (isTargetingAdmin) {
     try {
       const cookieStore = await cookies()
-      const adminToken = cookieStore.get('admin_token')?.value || cookieStore.get('token')?.value
+      const adminToken = cookieStore.get('admin_token')?.value || 
+                         cookieStore.get('token')?.value ||
+                         cookieStore.get('admin_token_shared')?.value ||
+                         cookieStore.get('token_shared')?.value
       if (adminToken) {
         const decoded = jwt.verify(adminToken, JWT_SECRET)
         if (decoded && decoded.role === 'admin') {
@@ -100,9 +103,8 @@ export default async function RootLayout({ children }) {
     }
   }
 
-  // Only hide storefront navbar/footer for an authenticated admin viewing admin console
-  // For non-admin visitors or 404 errors, storefront chrome is always preserved consistently
-  const showStorefrontChrome = !isVerifiedAdmin
+  // Never show customer storefront navbar/footer on admin domain or for verified admin
+  const showStorefrontChrome = !isTargetingAdmin && !isVerifiedAdmin
 
   return (
     <html lang="en" suppressHydrationWarning>

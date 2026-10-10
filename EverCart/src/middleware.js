@@ -94,24 +94,11 @@ export function middleware(request) {
     return response
   }
 
-  // On the main domain:
+  // On the main domain, redirect any /admin access cleanly to the admin subdomain root
   if (pathname === '/admin' || pathname === '/admin/' || pathname.startsWith('/admin/')) {
-    if (!host.includes('localhost')) {
-      const redirectUrl = new URL('/', adminOrigin)
-      redirectUrl.search = request.nextUrl.search
-      const response = NextResponse.redirect(redirectUrl)
-      Object.entries(CORS_HEADERS).forEach(([k, v]) => response.headers.set(k, v))
-      return response
-    }
-
-    // On localhost, allow direct /admin access with x-is-admin header
-    const reqHeaders = new Headers(request.headers)
-    reqHeaders.set('x-is-admin', 'true')
-    const response = NextResponse.next({
-      request: {
-        headers: reqHeaders,
-      },
-    })
+    const redirectUrl = new URL('/', adminOrigin)
+    redirectUrl.search = request.nextUrl.search
+    const response = NextResponse.redirect(redirectUrl)
     Object.entries(CORS_HEADERS).forEach(([k, v]) => response.headers.set(k, v))
     return response
   }

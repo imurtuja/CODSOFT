@@ -3,6 +3,13 @@ import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secure-secret-key'
 
+function sanitizeToken(token) {
+  if (!token || typeof token !== 'string') return null
+  const trimmed = token.trim()
+  if (!trimmed || trimmed === 'null' || trimmed === 'undefined' || trimmed === 'false') return null
+  return trimmed
+}
+
 export function getAuthUser(request) {
   try {
     let token = null
@@ -10,16 +17,41 @@ export function getAuthUser(request) {
     // 1. Check Bearer Authorization header
     const authHeader = request.headers.get('authorization')
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.substring(7).trim()
+      token = sanitizeToken(authHeader.substring(7))
     }
 
-    // 2. Check HTTP cookie
+    // 2. Check HTTP cookies (direct and cross-subdomain)
     if (!token && typeof request.cookies?.get === 'function') {
-      token = request.cookies.get('token')?.value || request.cookies.get('admin_token')?.value
+      token = sanitizeToken(
+        request.cookies.get('token')?.value ||
+        request.cookies.get('admin_token')?.value ||
+        request.cookies.get('token_shared')?.value ||
+        request.cookies.get('admin_token_shared')?.value
+      )
     }
 
+    // 2b. Check raw Cookie header fallback
+    if (!token && typeof request.headers?.get === 'function') {
+      const cookieHeader = request.headers.get('cookie')
+      if (cookieHeader) {
+        const parsed = Object.fromEntries(
+          cookieHeader.split(';').map(c => {
+            const [k, ...v] = c.trim().split('=')
+            return [k, decodeURIComponent(v.join('='))]
+          })
+        )
+        token = sanitizeToken(
+          parsed['admin_token'] ||
+          parsed['token'] ||
+          parsed['admin_token_shared'] ||
+          parsed['token_shared']
+        )
+      }
+    }
+
+    // 3. Check custom header fallback
     if (!token) {
-      token = request.headers.get('x-admin-token')
+      token = sanitizeToken(request.headers.get('x-admin-token'))
     }
 
     if (!token) return null
@@ -41,15 +73,38 @@ export function requireAuth(request) {
 
     const authHeader = request.headers.get('authorization')
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.substring(7).trim()
+      token = sanitizeToken(authHeader.substring(7))
     }
 
     if (!token && typeof request.cookies?.get === 'function') {
-      token = request.cookies.get('token')?.value || request.cookies.get('admin_token')?.value
+      token = sanitizeToken(
+        request.cookies.get('token')?.value ||
+        request.cookies.get('admin_token')?.value ||
+        request.cookies.get('token_shared')?.value ||
+        request.cookies.get('admin_token_shared')?.value
+      )
+    }
+
+    if (!token && typeof request.headers?.get === 'function') {
+      const cookieHeader = request.headers.get('cookie')
+      if (cookieHeader) {
+        const parsed = Object.fromEntries(
+          cookieHeader.split(';').map(c => {
+            const [k, ...v] = c.trim().split('=')
+            return [k, decodeURIComponent(v.join('='))]
+          })
+        )
+        token = sanitizeToken(
+          parsed['admin_token'] ||
+          parsed['token'] ||
+          parsed['admin_token_shared'] ||
+          parsed['token_shared']
+        )
+      }
     }
 
     if (!token) {
-      token = request.headers.get('x-admin-token')
+      token = sanitizeToken(request.headers.get('x-admin-token'))
     }
     
     if (!token) {

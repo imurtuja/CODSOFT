@@ -86,33 +86,52 @@ export default function Navbar() {
     if (typeof window === 'undefined') return 'https://admin.evercart.murtuja.in'
     const host = window.location.host
     const protocol = window.location.protocol
+
+    if (host.includes('localhost') || host.includes('127.0.0.1')) {
+      const port = window.location.port ? `:${window.location.port}` : ''
+      return `${protocol}//admin.localhost${port}`
+    }
+
     if (host.startsWith('admin.')) {
       return `${protocol}//${host}`
     }
-    return `${protocol}//admin.${host}`
+
+    return `${protocol}//admin.evercart.murtuja.in`
   }
 
   const handleAdminNavigate = async (e) => {
     e.preventDefault()
+    if (typeof window === 'undefined') return
+
     const targetUrl = getAdminUrl()
 
     try {
-      const token = localStorage.getItem('token')
+      const rawToken = localStorage.getItem('token')
+      const token = (rawToken && rawToken !== 'null' && rawToken !== 'undefined') ? rawToken.trim() : null
       if (token) {
-        // Securely sync session cookie via Authorization header (never in URL)
-        await fetch('/api/auth/admin-session', {
+        // Request secure 30s transfer ticket from admin-session endpoint
+        const res = await fetch('/api/auth/admin-session', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         }).catch(() => null)
+
+        if (res && res.ok) {
+          const data = await res.json().catch(() => ({}))
+          if (data.ticket) {
+            // Claim ticket on admin origin - sets first-party cookies and bridge HTML syncs localStorage!
+            window.location.href = `${targetUrl}/api/auth/admin-session?claim=${encodeURIComponent(data.ticket)}`
+            return
+          }
+        }
       }
     } catch (err) {
-      console.error(err)
+      console.error('Admin ticket transfer failed:', err)
     }
 
-    // Completely clean URL navigation without exposing any tokens or user parameters
+    // Direct clean navigation fallback
     window.location.href = targetUrl
   }
 

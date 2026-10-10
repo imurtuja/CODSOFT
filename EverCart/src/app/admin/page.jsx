@@ -34,21 +34,41 @@ function getPaymentMethodDisplay(order) {
   return 'UPI / Card'
 }
 
+// Resolve external storefront URLs (returns localhost:3000 locally and evercart.murtuja.in in production)
+function getStorefrontUrl(path = '/') {
+  if (typeof window === 'undefined') return path
+  const host = window.location.host || ''
+  const protocol = window.location.protocol || 'http:'
+  const cleanPath = path.startsWith('/') ? path : `/${path}`
+
+  if (host.includes('localhost') || host.includes('127.0.0.1')) {
+    const cleanHost = host.replace(/^admin\./, '')
+    return `${protocol}//${cleanHost}${cleanPath}`
+  }
+
+  if (host.startsWith('admin.')) {
+    const cleanHost = host.replace(/^admin\./, '')
+    return `${protocol}//${cleanHost}${cleanPath}`
+  }
+
+  return `https://evercart.murtuja.in${cleanPath}`
+}
+
 // Sleek Hover Copy Tooltip Component (Positioned on bottom side with zero scaling and no blue selection)
 function CopyableCell({ text, displayText, className = '', copyLabel = '' }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = (e) => {
     e.stopPropagation()
-    if (!text || text === '—') return
+    if (!text || text === '-') return
     navigator.clipboard.writeText(text)
     setCopied(true)
     toast.success(copyLabel ? `${copyLabel} copied` : 'Copied to clipboard')
     setTimeout(() => setCopied(false), 2000)
   }
 
-  if (!text || text === '—') {
-    return <span className={`text-gray-400 text-xs ${className}`}>{displayText || '—'}</span>
+  if (!text || text === '-') {
+    return <span className={`text-gray-400 text-xs ${className}`}>{displayText || '-'}</span>
   }
 
   return (
@@ -339,23 +359,37 @@ export default function AdminPage() {
     try {
       if (typeof window === 'undefined') return false
 
-      // 1. Check session API endpoint via secure HttpOnly cookies
-      const cookieRes = await fetch('/api/auth/admin-session').catch(() => null)
+      const rawStoredToken = localStorage.getItem('token')
+      const storedToken = (rawStoredToken && rawStoredToken !== 'null' && rawStoredToken !== 'undefined') ? rawStoredToken.trim() : null
+      const headers = {}
+      if (storedToken) {
+        headers['Authorization'] = `Bearer ${storedToken}`
+      }
+
+      // 1. Check session API endpoint via secure HttpOnly cookies + optional stored token
+      const cookieRes = await fetch('/api/auth/admin-session', {
+        headers,
+        credentials: 'include',
+        cache: 'no-store'
+      }).catch(() => null)
+
       if (cookieRes && cookieRes.ok) {
         const data = await cookieRes.json().catch(() => ({}))
         if (data.authenticated && data.user && data.user.role === 'admin') {
-          if (data.token) localStorage.setItem('token', data.token)
+          const validToken = (data.token && data.token !== 'null' && data.token !== 'undefined') ? data.token.trim() : storedToken
+          if (validToken) {
+            localStorage.setItem('token', validToken)
+          }
           localStorage.setItem('currentUser', JSON.stringify(data.user))
           localStorage.setItem('user', JSON.stringify(data.user))
           setAdminUser(data.user)
           setIsAuthorized(true)
           setAuthChecking(false)
-          return true
+          return validToken || true
         }
       }
 
       // Check localStorage for existing session
-      const storedToken = localStorage.getItem('token')
       const storedUserRaw = localStorage.getItem('currentUser')
       let storedUser = null
       try {
@@ -368,28 +402,6 @@ export default function AdminPage() {
         setAdminUser(null)
         setAuthChecking(false)
         return false
-      }
-
-      if (storedToken) {
-        try {
-          const res = await fetch('/api/auth/admin-session', {
-            headers: { Authorization: `Bearer ${storedToken}` }
-          }).catch(() => null)
-
-          if (res && res.ok) {
-            const data = await res.json().catch(() => ({}))
-            if (data.authenticated && data.user && data.user.role === 'admin') {
-              localStorage.setItem('currentUser', JSON.stringify(data.user))
-              localStorage.setItem('user', JSON.stringify(data.user))
-              setAdminUser(data.user)
-              setIsAuthorized(true)
-              setAuthChecking(false)
-              return true
-            }
-          }
-        } catch (e) {
-          console.error('Session verify error:', e)
-        }
       }
 
       setIsAuthorized(false)
@@ -405,11 +417,21 @@ export default function AdminPage() {
     }
   }, [])
 
+  // Helper for admin authorization headers across all queries and mutations
+  const getAdminHeaders = useCallback(() => {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    const token = (raw && raw !== 'null' && raw !== 'undefined') ? raw.trim() : null
+    const headers = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    return headers
+  }, [])
+
   // 2. Load Core Data (Orders & Products)
   const loadData = useCallback(async (overrideToken = null) => {
     try {
       setLoading(true)
-      const token = overrideToken || (typeof window !== 'undefined' ? localStorage.getItem('token') : null)
+      const rawToken = overrideToken || (typeof window !== 'undefined' ? localStorage.getItem('token') : null)
+      const token = (rawToken && typeof rawToken === 'string' && rawToken !== 'null' && rawToken !== 'undefined') ? rawToken.trim() : null
       const headers = { 'Content-Type': 'application/json' }
       if (token) {
         headers['Authorization'] = `Bearer ${token}`
@@ -417,22 +439,16 @@ export default function AdminPage() {
 
       const [prodRes, ordersRes] = await Promise.all([
         fetch(`/api/products?admin=true&limit=1000&_t=${Date.now()}`, { 
-          headers, 
+          headers,
+          credentials: 'include',
           cache: 'no-store' 
         }).catch(err => ({ ok: false, error: err.message })),
         fetch(`/api/orders?admin=true&_t=${Date.now()}`, { 
-          headers, 
+          headers,
+          credentials: 'include',
           cache: 'no-store' 
         }).catch(err => ({ ok: false, error: err.message }))
       ])
-
-      // If orders endpoint returned 401 or 403, the session is expired or invalid
-      if (ordersRes && (ordersRes.status === 401 || ordersRes.status === 403)) {
-        setIsAuthorized(false)
-        setAdminUser(null)
-        setOrders([])
-        return
-      }
 
       if (prodRes && prodRes.ok) {
         const prodData = await prodRes.json().catch(() => ({}))
@@ -447,6 +463,9 @@ export default function AdminPage() {
         setOrders(Array.isArray(ordersData) ? ordersData : [])
       } else {
         setOrders([])
+        if (ordersRes && (ordersRes.status === 401 || ordersRes.status === 403)) {
+          console.warn('Orders fetch unauthorized status; admin credentials check.')
+        }
       }
 
       setLastSyncTime(new Date())
@@ -462,12 +481,20 @@ export default function AdminPage() {
   useEffect(() => {
     verifySession().then(authed => {
       if (authed) {
-        loadData()
+        const token = typeof authed === 'string' ? authed : null
+        loadData(token)
       }
     })
   }, [verifySession, loadData])
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/admin-session', {
+        method: 'DELETE',
+        credentials: 'include'
+      }).catch(() => null)
+    } catch (e) {}
+
     localStorage.removeItem('token')
     localStorage.removeItem('currentUser')
     localStorage.removeItem('user')
@@ -477,13 +504,7 @@ export default function AdminPage() {
     setProducts([])
     toast.info('Signed out of Admin Console')
     if (typeof window !== 'undefined') {
-      const host = window.location.host
-      const protocol = window.location.protocol
-      if (host.startsWith('admin.')) {
-        window.location.href = `${protocol}//${host.replace(/^admin\./, '')}`
-        return
-      }
-      window.location.href = '/'
+      window.location.href = getStorefrontUrl('/')
     }
   }
 
@@ -491,13 +512,12 @@ export default function AdminPage() {
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       setUpdatingOrderId(orderId)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers = { 'Content-Type': 'application/json' }
-      if (token) headers['Authorization'] = `Bearer ${token}`
+      const headers = getAdminHeaders()
 
       const response = await fetch(`/api/orders/${orderId}`, {
         method: 'PUT',
         headers,
+        credentials: 'include',
         body: JSON.stringify({ orderStatus: newStatus })
       })
 
@@ -535,15 +555,14 @@ export default function AdminPage() {
     }
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers = { 'Content-Type': 'application/json' }
-      if (token) headers['Authorization'] = `Bearer ${token}`
+      const headers = getAdminHeaders()
 
       await Promise.all(
         selectedOrderIds.map(id =>
           fetch(`/api/orders/${id}`, {
             method: 'PUT',
             headers,
+            credentials: 'include',
             body: JSON.stringify({ orderStatus: newStatus })
           }).catch(e => console.error(e))
         )
@@ -573,9 +592,7 @@ export default function AdminPage() {
 
     try {
       setUpdatingStockId(productId)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers = { 'Content-Type': 'application/json' }
-      if (token) headers['Authorization'] = `Bearer ${token}`
+      const headers = getAdminHeaders()
 
       // Optimistic update
       setProducts(prev =>
@@ -587,6 +604,7 @@ export default function AdminPage() {
       const response = await fetch(`/api/products/${productId}`, {
         method: 'PUT',
         headers,
+        credentials: 'include',
         body: JSON.stringify({ stock: newStock })
       })
 
@@ -609,9 +627,7 @@ export default function AdminPage() {
   // Quick Toggle Product Featured
   const handleToggleProductFeatured = async (productId, currentVal) => {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers = { 'Content-Type': 'application/json' }
-      if (token) headers['Authorization'] = `Bearer ${token}`
+      const headers = getAdminHeaders()
 
       // Optimistic update
       setProducts(prev =>
@@ -623,6 +639,7 @@ export default function AdminPage() {
       const res = await fetch(`/api/products/${productId}`, {
         method: 'PUT',
         headers,
+        credentials: 'include',
         body: JSON.stringify({ isFeatured: !currentVal })
       })
 
@@ -647,9 +664,7 @@ export default function AdminPage() {
     const targetProd = (Array.isArray(products) ? products : []).find(p => p._id === productId)
     const prodName = targetProd?.name || 'Product'
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers = { 'Content-Type': 'application/json' }
-      if (token) headers['Authorization'] = `Bearer ${token}`
+      const headers = getAdminHeaders()
 
       // Optimistic update: If enabling, set target to true and unset all other products
       setProducts(prev =>
@@ -664,6 +679,7 @@ export default function AdminPage() {
       const res = await fetch(`/api/products/${productId}`, {
         method: 'PUT',
         headers,
+        credentials: 'include',
         body: JSON.stringify({ isSpotlight: nextSpotlight })
       })
 
@@ -687,9 +703,7 @@ export default function AdminPage() {
   const handleToggleProductStatus = async (productId, currentStatus) => {
     const nextStatus = currentStatus === 'active' ? 'inactive' : 'active'
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers = { 'Content-Type': 'application/json' }
-      if (token) headers['Authorization'] = `Bearer ${token}`
+      const headers = getAdminHeaders()
 
       // Optimistic update
       setProducts(prev =>
@@ -701,6 +715,7 @@ export default function AdminPage() {
       const res = await fetch(`/api/products/${productId}`, {
         method: 'PUT',
         headers,
+        credentials: 'include',
         body: JSON.stringify({ status: nextStatus })
       })
 
@@ -727,13 +742,12 @@ export default function AdminPage() {
     }
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers = { 'Content-Type': 'application/json' }
-      if (token) headers['Authorization'] = `Bearer ${token}`
+      const headers = getAdminHeaders()
 
       const response = await fetch(`/api/products/${productId}`, {
         method: 'DELETE',
-        headers
+        headers,
+        credentials: 'include'
       })
 
       if (response.ok) {
@@ -815,9 +829,7 @@ export default function AdminPage() {
     setProductFormSaving(true)
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers = { 'Content-Type': 'application/json' }
-      if (token) headers['Authorization'] = `Bearer ${token}`
+      const headers = getAdminHeaders()
 
       const method = editingProduct ? 'PUT' : 'POST'
       const url = editingProduct ? `/api/products/${editingProduct._id}` : '/api/products'
@@ -872,6 +884,7 @@ export default function AdminPage() {
       const response = await fetch(url, {
         method,
         headers,
+        credentials: 'include',
         body: JSON.stringify(payload)
       })
 
@@ -1120,7 +1133,7 @@ export default function AdminPage() {
   }
 
   const formatDate = (dateString) => {
-    if (!dateString) return '—'
+    if (!dateString) return '-'
     try {
       return new Intl.DateTimeFormat('en-IN', {
         day: '2-digit',
@@ -1240,7 +1253,7 @@ export default function AdminPage() {
 
             {/* Storefront Link */}
             <a
-              href="/"
+              href={getStorefrontUrl('/')}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 shadow-2xs transition-colors"
@@ -1779,7 +1792,7 @@ export default function AdminPage() {
                             <td className="px-[5px] py-[5px] whitespace-nowrap w-[96px] min-w-[96px] max-w-[96px]">
                               <CopyableCell
                                 text={ship.phone || order.phone}
-                                displayText={ship.phone || order.phone || '—'}
+                                displayText={ship.phone || order.phone || '-'}
                                 className="text-xs text-gray-700 font-normal"
                                 copyLabel="Phone number"
                               />
@@ -1840,7 +1853,7 @@ export default function AdminPage() {
                             <td className="px-[5px] py-[5px] whitespace-nowrap w-[165px] min-w-[165px] max-w-[165px]">
                               <div className="text-gray-600 leading-tight max-w-[155px]">
                                 <div className="truncate text-gray-800 text-xs" title={ship.address || ''}>
-                                  {ship.address || '—'}
+                                  {ship.address || '-'}
                                 </div>
                                 <div className="text-[11px] text-gray-500 truncate mt-0.5" title={[ship.city, ship.state, ship.zipCode].filter(Boolean).join(', ')}>
                                   {[ship.city, ship.state, ship.zipCode].filter(Boolean).join(', ')}
@@ -1927,7 +1940,7 @@ export default function AdminPage() {
                                   </svg>
                                 </button>
                                 <a
-                                  href={`/order/${order.orderId || order._id}`}
+                                  href={getStorefrontUrl(`/order/${order.orderId || order._id}`)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="p-1 rounded-md text-gray-400 hover:text-black hover:bg-gray-100 transition-colors cursor-pointer"
@@ -2229,16 +2242,17 @@ export default function AdminPage() {
                             {/* 9. Actions (Centered, icons only) */}
                             <td className="px-[5px] py-[5px] text-center whitespace-nowrap w-[100px] min-w-[100px] max-w-[100px]">
                               <div className="flex items-center justify-center gap-1">
-                                <Link
-                                  href={`/product/${product._id}`}
+                                <a
+                                  href={getStorefrontUrl(`/product/${product._id}`)}
                                   target="_blank"
+                                  rel="noopener noreferrer"
                                   className="p-1.5 rounded-md text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer"
                                   title="View on storefront"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                   </svg>
-                                </Link>
+                                </a>
                                 <button
                                   type="button"
                                   onClick={() => openEditModal(product)}
@@ -2442,7 +2456,7 @@ export default function AdminPage() {
                     <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
-                    <span>{inspectingOrder.shippingAddress?.phone || inspectingOrder.phone || '—'}</span>
+                    <span>{inspectingOrder.shippingAddress?.phone || inspectingOrder.phone || '-'}</span>
                   </div>
                 </div>
 
@@ -2524,7 +2538,7 @@ export default function AdminPage() {
             {/* 3. Fixed Footer */}
             <div className="px-5 py-3 border-t border-gray-200 bg-white flex items-center justify-between gap-3 shrink-0">
               <a
-                href={`/order/${inspectingOrder.orderId || inspectingOrder._id}`}
+                href={getStorefrontUrl(`/order/${inspectingOrder.orderId || inspectingOrder._id}`)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-700 hover:text-black hover:bg-gray-100 border border-gray-200 transition-colors"
@@ -3271,7 +3285,7 @@ export default function AdminPage() {
                 <div className="flex items-center gap-2">
                   {editingProduct && (
                     <a
-                      href={`/product/${editingProduct._id}`}
+                      href={getStorefrontUrl(`/product/${editingProduct._id}`)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
