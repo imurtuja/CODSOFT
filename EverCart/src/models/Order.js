@@ -63,9 +63,9 @@ const orderSchema = new mongoose.Schema({
 })
 
 orderSchema.index({ user: 1, orderDate: -1 })
-
-if (mongoose.models && mongoose.models.Order) {
-  delete mongoose.models.Order
-}
+orderSchema.index({ userId: 1, orderDate: -1 })
+orderSchema.index({ 'shippingAddress.email': 1, orderDate: -1 })
+orderSchema.index({ orderDate: -1 })
+orderSchema.index({ orderStatus: 1, orderDate: -1 })
 
 export default mongoose.models.Order || mongoose.model('Order', orderSchema)

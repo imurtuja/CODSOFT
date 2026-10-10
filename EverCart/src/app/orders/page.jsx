@@ -9,8 +9,43 @@ import { toast } from '../../components/Toast'
 import { ChevronRightIcon } from '../../components/CategoryIcons'
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState([])
-  const [loading, setLoading] = useState(true)
+  // Instant SWR state: initialize synchronously from sessionStorage on client mount
+  const [orders, setOrders] = useState(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const rawUser = localStorage.getItem('currentUser') || localStorage.getItem('user')
+      if (!rawUser) return []
+      const user = JSON.parse(rawUser)
+      const uid = user?._id || user?.id || user?.email
+      if (uid) {
+        const cached = sessionStorage.getItem(`evercart_orders_${uid}`)
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed
+        }
+      }
+    } catch (e) {}
+    return []
+  })
+
+  const [loading, setLoading] = useState(() => {
+    if (typeof window === 'undefined') return false
+    try {
+      const rawUser = localStorage.getItem('currentUser') || localStorage.getItem('user')
+      if (!rawUser) return false
+      const user = JSON.parse(rawUser)
+      const uid = user?._id || user?.id || user?.email
+      if (uid) {
+        const cached = sessionStorage.getItem(`evercart_orders_${uid}`)
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (Array.isArray(parsed) && parsed.length > 0) return false
+        }
+      }
+    } catch (e) {}
+    return true
+  })
+
   const [isAuth, setIsAuth] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
 
@@ -36,8 +71,10 @@ export default function OrdersPage() {
 
   const fetchUserOrders = useCallback(async () => {
     try {
-      setLoading(true)
-      if (!checkUserAuthentication()) return
+      if (!checkUserAuthentication()) {
+        setLoading(false)
+        return
+      }
 
       const rawUser = typeof window !== 'undefined' ? (localStorage.getItem('currentUser') || localStorage.getItem('user')) : null
       let userData = null
@@ -49,6 +86,7 @@ export default function OrdersPage() {
 
       if (!userData) {
         setOrders([])
+        setLoading(false)
         return
       }
 
@@ -64,15 +102,22 @@ export default function OrdersPage() {
       if (!response.ok) {
         const errJson = await response.json().catch(() => ({}))
         console.warn('Orders fetch warning:', errJson.error || response.statusText)
-        setOrders([])
         return
       }
 
       const ordersData = await response.json().catch(() => [])
-      setOrders(Array.isArray(ordersData) ? ordersData : [])
+      if (Array.isArray(ordersData)) {
+        setOrders(ordersData)
+        try {
+          if (typeof window !== 'undefined' && userId) {
+            sessionStorage.setItem(`evercart_orders_${userId}`, JSON.stringify(ordersData))
+          }
+        } catch (e) {
+          // Ignore cache write errors
+        }
+      }
     } catch (error) {
       console.error('Error loading orders:', error)
-      setOrders([])
       toast.error('Failed to load orders. Please try again.')
     } finally {
       setLoading(false)

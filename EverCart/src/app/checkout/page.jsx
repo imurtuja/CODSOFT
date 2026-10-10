@@ -135,30 +135,75 @@ export default function CheckoutPage() {
   }, [])
 
   useEffect(() => {
-    // Suppress external noise
+    // Suppress external third-party SDK and ad-blocker noise (Razorpay / Sentry / Sardine / Lumberjack / Stripe)
+    const isIgnored = (str) => {
+      if (!str) return false
+      const s = String(str).toLowerCase()
+      return (
+        s.includes('lumberjack') ||
+        s.includes('sentry') ||
+        s.includes('otp-credentials') ||
+        s.includes('sardine') ||
+        s.includes('stripe') ||
+        s.includes('unsafe header') ||
+        s.includes('err_blocked_by_client') ||
+        s.includes('x-rtb-fingerprint-id') ||
+        s.includes('request-id')
+      )
+    }
+
     const originalError = console.error
     const originalWarn = console.warn
 
     console.error = (...args) => {
-      const msg = args[0]?.toString() || ''
-      if (msg.includes('lumberjack.razorpay.com') || msg.includes('sentry') || msg.includes('otp-credentials')) return
+      const combined = args.map(a => {
+        try {
+          return typeof a === 'object' ? (a?.message || JSON.stringify(a)) : String(a)
+        } catch (e) {
+          return String(a)
+        }
+      }).join(' ')
+      if (isIgnored(combined)) return
       originalError.apply(console, args)
     }
 
     console.warn = (...args) => {
-      const msg = args[0]?.toString() || ''
-      if (msg.includes('lumberjack.razorpay.com') || msg.includes('sentry') || msg.includes('otp-credentials')) return
+      const combined = args.map(a => {
+        try {
+          return typeof a === 'object' ? (a?.message || JSON.stringify(a)) : String(a)
+        } catch (e) {
+          return String(a)
+        }
+      }).join(' ')
+      if (isIgnored(combined)) return
       originalWarn.apply(console, args)
     }
 
+    const handleWindowError = (e) => {
+      if (isIgnored(e?.message) || isIgnored(e?.filename)) {
+        e.preventDefault?.()
+        e.stopPropagation?.()
+      }
+    }
+
+    const handleUnhandledRejection = (e) => {
+      if (isIgnored(e?.reason?.message) || isIgnored(e?.reason)) {
+        e.preventDefault?.()
+      }
+    }
+
+    window.addEventListener('error', handleWindowError, true)
+    window.addEventListener('unhandledrejection', handleUnhandledRejection, true)
+
     loadCart()
     checkAuth()
-    loadRazorpayScript()
     setAuthChecking(false)
 
     return () => {
       console.error = originalError
       console.warn = originalWarn
+      window.removeEventListener('error', handleWindowError, true)
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection, true)
     }
   }, [checkAuth, loadCart])
 

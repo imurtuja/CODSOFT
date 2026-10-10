@@ -4,16 +4,38 @@ import Order from '../../../models/Order.js'
 import Product from '../../../models/Product.js'
 import { getAuthUser } from '../../../lib/auth.js'
 
+// High-speed in-memory cache for customer orders
+const ordersCache = new Map()
+const ORDERS_CACHE_TTL_MS = 15000
+
+export function clearOrdersCache() {
+  ordersCache.clear()
+}
+
 export async function GET(request) {
   try {
-    await connectDB()
-    
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
     const isAdminRequested = searchParams.get('admin') === 'true'
     const orderIdParam = searchParams.get('orderId')
 
     const authUser = getAuthUser(request)
+
+    // Check fast in-memory cache for non-admin listing
+    const cacheKey = !orderIdParam && !isAdminRequested ? (authUser?.userId || userId || '') : null
+    if (cacheKey) {
+      const cached = ordersCache.get(cacheKey)
+      if (cached && Date.now() - cached.timestamp < ORDERS_CACHE_TTL_MS) {
+        return NextResponse.json(cached.data, {
+          headers: {
+            'X-Cache': 'HIT',
+            'Cache-Control': 'private, no-cache, no-transform',
+          },
+        })
+      }
+    }
+
+    await connectDB()
 
     // Specific order inquiry
     if (orderIdParam) {
@@ -101,6 +123,10 @@ export async function GET(request) {
     const orders = await Order.find(filter)
       .sort({ orderDate: -1 })
       .lean()
+
+    if (cacheKey) {
+      ordersCache.set(cacheKey, { data: orders, timestamp: Date.now() })
+    }
     
     return NextResponse.json(orders)
     
@@ -241,6 +267,8 @@ export async function POST(request) {
       orderStatus: paymentMethod === 'cod' ? 'confirmed' : 'pending'
     })
     
+    clearOrdersCache()
+
     return NextResponse.json({
       success: true,
       order: order.toObject(),

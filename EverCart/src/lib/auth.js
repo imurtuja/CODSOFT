@@ -24,7 +24,7 @@ export function getAuthUser(request) {
 
     if (!token) return null
 
-    const decoded = jwt.verify(token, JWT_SECRET)
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] })
     return {
       userId: decoded.userId,
       email: decoded.email,
@@ -59,7 +59,7 @@ export function requireAuth(request) {
       )
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET)
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] })
     
     return {
       userId: decoded.userId,

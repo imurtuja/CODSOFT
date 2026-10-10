@@ -11,16 +11,18 @@ export async function POST(request) {
     
     const { email, password } = await request.json()
     
-    // Validation
-    if (!email || !password) {
+    // Strict validation to prevent NoSQL operator injection ($gt, $ne, etc.)
+    if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { error: 'Email and password must be valid strings' },
         { status: 400 }
       )
     }
+
+    const cleanEmail = email.toLowerCase().trim()
     
     // Find user
-    const user = await User.findOne({ email: email.toLowerCase() })
+    const user = await User.findOne({ email: cleanEmail })
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
@@ -45,7 +47,7 @@ export async function POST(request) {
         role: user.role || 'user'
       },
       process.env.JWT_SECRET || 'your-secure-secret-key',
-      { expiresIn: '7d' }
+      { expiresIn: '7d', algorithm: 'HS256' }
     )
     
     // Return user without password

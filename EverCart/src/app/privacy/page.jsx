@@ -25,7 +25,7 @@ export default function PrivacyPage() {
           <section className="border-t border-gray-200 pt-6">
             <h2 className="text-xl font-bold text-gray-900 mb-3">3. Data Sharing and Third Parties</h2>
             <p>
-              We share your information solely with trusted third-party service providers who assist our operations—such as logistics carriers, cloud hosting providers, and payment processors. We never sell, rent, or trade your personal data to marketing third parties.
+              We share your information solely with trusted third-party service providers who assist our operations - such as logistics carriers, cloud hosting providers, and payment processors. We never sell, rent, or trade your personal data to marketing third parties.
             </p>
           </section>
 

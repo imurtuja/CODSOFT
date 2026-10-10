@@ -3,6 +3,7 @@ import mongoose from 'mongoose'
 import connectDB from '../../../../lib/mongodb.js'
 import Order from '../../../../models/Order.js'
 import { requireAuth, getAuthUser } from '../../../../lib/auth.js'
+import { clearOrdersCache } from '../route.js'
 
 export async function GET(request, { params }) {
   try {
@@ -166,6 +167,7 @@ export async function PUT(request, { params }) {
       if (updateData.orderStatus === 'cancelled' && ['pending', 'confirmed'].includes(order.orderStatus)) {
         order.orderStatus = 'cancelled'
         await order.save()
+        clearOrdersCache()
         return NextResponse.json({ success: true, order: order.toObject() })
       } else {
         return NextResponse.json(
@@ -184,6 +186,7 @@ export async function PUT(request, { params }) {
     }
 
     await order.save()
+    clearOrdersCache()
     
     return NextResponse.json({
       success: true,

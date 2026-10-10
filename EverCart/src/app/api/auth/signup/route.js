@@ -9,23 +9,33 @@ export async function POST(request) {
     
     const { firstName, lastName, email, password } = await request.json()
     
-    // Validation
-    if (!firstName || !lastName || !email || !password) {
+    // Strict validation to prevent NoSQL operator injection
+    if (
+      !firstName || !lastName || !email || !password ||
+      typeof firstName !== 'string' ||
+      typeof lastName !== 'string' ||
+      typeof email !== 'string' ||
+      typeof password !== 'string'
+    ) {
       return NextResponse.json(
-        { error: 'All fields are required' },
+        { error: 'All fields are required and must be valid strings' },
         { status: 400 }
       )
     }
+
+    const cleanEmail = email.toLowerCase().trim()
+    const cleanFirstName = firstName.trim().slice(0, 60)
+    const cleanLastName = lastName.trim().slice(0, 60)
     
-    if (password.length < 6) {
+    if (password.length < 6 || password.length > 128) {
       return NextResponse.json(
-        { error: 'Password must be at least 6 characters' },
+        { error: 'Password must be between 6 and 128 characters' },
         { status: 400 }
       )
     }
     
     // Check if user already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase() })
+    const existingUser = await User.findOne({ email: cleanEmail })
     if (existingUser) {
       return NextResponse.json(
         { error: 'User already exists with this email' },
@@ -38,9 +48,9 @@ export async function POST(request) {
     
     // Create user
     const user = await User.create({
-      firstName,
-      lastName,
-      email: email.toLowerCase(),
+      firstName: cleanFirstName,
+      lastName: cleanLastName,
+      email: cleanEmail,
       password: hashedPassword,
       role: 'user'
     })
@@ -54,7 +64,7 @@ export async function POST(request) {
         role: user.role || 'user'
       },
       process.env.JWT_SECRET || 'your-secure-secret-key',
-      { expiresIn: '7d' }
+      { expiresIn: '7d', algorithm: 'HS256' }
     )
 
     // Return user without password

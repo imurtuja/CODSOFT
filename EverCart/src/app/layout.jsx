@@ -14,8 +14,58 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secure-secret-key'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'EverCart - Your Ultimate Shopping Destination',
-  description: 'Shop the latest electronics, gadgets, and more at EverCart',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://evercart.murtuja.in'),
+  title: {
+    default: 'EverCart - Flagship Electronics, Smartphones & Laptops',
+    template: '%s | EverCart',
+  },
+  description: 'Shop curated consumer technology, flagship smartphones, high-performance laptops, gaming gear, and studio-grade audio at EverCart. 100% Genuine, Best Prices, Fast Shipping.',
+  keywords: [
+    'EverCart',
+    'buy electronics online India',
+    'flagship smartphones',
+    'gaming laptops',
+    'wireless earbuds',
+    'best price electronics',
+    'genuine tech gadgets',
+    'online tech store'
+  ],
+  authors: [{ name: 'EverCart' }],
+  creator: 'EverCart',
+  publisher: 'EverCart',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_IN',
+    url: 'https://evercart.murtuja.in',
+    siteName: 'EverCart',
+    title: 'EverCart - Flagship Electronics, Smartphones & Laptops',
+    description: 'Shop curated flagship smartphones, laptops, gaming gear, and audio hardware at honest prices.',
+    images: [
+      {
+        url: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=1200&h=630&q=85',
+        width: 1200,
+        height: 630,
+        alt: 'EverCart Tech Store',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'EverCart - Flagship Electronics, Smartphones & Laptops',
+    description: 'Curated consumer technology, flagship smartphones, laptops, and studio audio.',
+    images: ['https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=1200&h=630&q=85'],
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any', type: 'image/x-icon' },
