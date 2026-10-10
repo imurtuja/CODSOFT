@@ -132,10 +132,14 @@ export async function GET(request) {
         .lean()
       total = products.length
     } else {
+      const selectedFields = isAdmin 
+        ? 'name brand description price originalPrice category images features specifications stock sku rating status tags isFeatured isSpotlight sales createdAt updatedAt'
+        : 'name brand price originalPrice category images stock rating tags isFeatured isSpotlight createdAt'
+
       const [t, p] = await Promise.all([
         Product.countDocuments(query),
         Product.find(query)
-          .select('name brand description price originalPrice category images features specifications stock sku rating status tags isFeatured isSpotlight sales createdAt updatedAt')
+          .select(selectedFields)
           .skip((page - 1) * limit)
           .limit(limit)
           .sort(sortObj)

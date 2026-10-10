@@ -5,12 +5,22 @@ import Image from 'next/image'
 import { useState, useEffect, useCallback, memo } from 'react'
 import { addToCart as saveProductToCart, isItemInCart } from '../utils/cartManager'
 import { toast } from './Toast'
+import { fetchCached } from '../utils/apiCache'
 
 function ProductCard({ product }) {
   const [imageError, setImageError] = useState(false)
   const [isInCart, setIsInCart] = useState(false)
   const [adding, setAdding] = useState(false)
   const [justAdded, setJustAdded] = useState(false)
+
+  const handlePrefetch = useCallback(() => {
+    const pid = product?._id || product?.id
+    if (!pid || typeof window === 'undefined') return
+    try {
+      sessionStorage.setItem(`evercart_preview_${pid}`, JSON.stringify(product))
+      fetchCached(`/api/products/${pid}`).catch(() => {})
+    } catch (e) {}
+  }, [product])
   
   const checkCartState = useCallback(() => {
     const pid = product?._id || product?.id
@@ -73,10 +83,18 @@ function ProductCard({ product }) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-gray-200/80 overflow-hidden hover:shadow-md hover:border-gray-300 transition-all duration-200 group flex flex-col h-full">
+    <div 
+      onMouseEnter={handlePrefetch}
+      onTouchStart={handlePrefetch}
+      className="bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-gray-200/80 overflow-hidden hover:shadow-md hover:border-gray-300 transition-all duration-200 group flex flex-col h-full"
+    >
       {/* Image Section */}
       <div className="relative overflow-hidden">
-        <Link href={`/product/${product._id || product.id}`} prefetch={true}>
+        <Link 
+          href={`/product/${product._id || product.id}`} 
+          prefetch={true}
+          onClick={handlePrefetch}
+        >
           <div className="aspect-square w-full bg-gray-50/50">
             {imageUrl && !imageError && !isBadUrl(imageUrl) ? (
               <Image
@@ -118,7 +136,11 @@ function ProductCard({ product }) {
         </p>
         
         {/* Product Name */}
-        <Link href={`/product/${product._id || product.id}`} prefetch={true}>
+        <Link 
+          href={`/product/${product._id || product.id}`} 
+          prefetch={true}
+          onClick={handlePrefetch}
+        >
           <h3 className="text-sm sm:text-base font-bold text-gray-900 leading-snug line-clamp-2 hover:text-black transition-colors mb-1.5">
             {product.name}
           </h3>

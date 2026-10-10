@@ -19,6 +19,7 @@ const CATEGORIES = [
 export default function ProductsPage() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isPageTransitioning, setIsPageTransitioning] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalProducts, setTotalProducts] = useState(0)
@@ -28,7 +29,12 @@ export default function ProductsPage() {
 
   const fetchProducts = useCallback(async () => {
     try {
-      setLoading(true)
+      // If we already have products, do optimistic transition (keepPreviousData) instead of wiping the grid
+      if (products.length > 0) {
+        setIsPageTransitioning(true)
+      } else {
+        setLoading(true)
+      }
 
       const params = new URLSearchParams({
         page: currentPage.toString(),
@@ -52,17 +58,43 @@ export default function ProductsPage() {
       setTotalProducts(data.total || 0)
     } catch (error) {
       console.error('Error fetching products:', error)
-      setProducts([])
+      if (products.length === 0) setProducts([])
       setTotalPages(1)
       toast.error('Unable to load products. Please check connection.')
     } finally {
       setLoading(false)
+      setIsPageTransitioning(false)
     }
-  }, [currentPage, sortBy, priceRange, selectedCategory])
+  }, [currentPage, sortBy, priceRange, selectedCategory, products.length])
 
   useEffect(() => {
     fetchProducts()
   }, [fetchProducts])
+
+  // Background adjacent prefetching: pre-warm next & previous pages for 0ms instant pagination
+  useEffect(() => {
+    const buildParamUrl = (page) => {
+      const p = new URLSearchParams({
+        page: page.toString(),
+        limit: '12',
+        sort: sortBy,
+      })
+      if (selectedCategory !== 'all') p.append('category', selectedCategory)
+      if (priceRange !== 'all') {
+        const [min, max] = priceRange.split('-').map(Number)
+        if (!isNaN(min)) p.append('minPrice', min.toString())
+        if (!isNaN(max)) p.append('maxPrice', max.toString())
+      }
+      return `/api/products?${p.toString()}`
+    }
+
+    if (currentPage < totalPages) {
+      fetchCached(buildParamUrl(currentPage + 1)).catch(() => {})
+    }
+    if (currentPage > 1) {
+      fetchCached(buildParamUrl(currentPage - 1)).catch(() => {})
+    }
+  }, [currentPage, totalPages, sortBy, selectedCategory, priceRange])
 
   const handleCategoryChange = (catId) => {
     setSelectedCategory(catId)
@@ -129,7 +161,7 @@ export default function ProductsPage() {
         </div>
 
         {/* Toolbar: Counter & Filter Controls */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 mb-8 shadow-sm">
+        <div id="products-toolbar" className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 mb-8 shadow-sm">
           {/* Result Count and Active Filters */}
           <div className="flex items-center space-x-3 text-sm text-gray-600">
             <span className="font-medium">
@@ -196,7 +228,7 @@ export default function ProductsPage() {
         </div>
 
         {/* Products Grid / Skeleton / Empty State */}
-        {loading ? (
+        {loading && products.length === 0 ? (
           <div className="flex flex-wrap justify-center gap-6">
             {Array.from({ length: 8 }).map((_, index) => (
               <div
@@ -219,7 +251,9 @@ export default function ProductsPage() {
           </div>
         ) : products.length > 0 ? (
           <>
-            <div className="flex flex-wrap justify-center gap-6">
+            <div className={`flex flex-wrap justify-center gap-6 transition-opacity duration-200 ${
+              isPageTransitioning ? 'opacity-60 pointer-events-none' : 'opacity-100'
+            }`}>
               {products.map((product) => (
                 <div
                   key={product._id || product.id}
@@ -235,7 +269,11 @@ export default function ProductsPage() {
               <div className="flex items-center justify-center gap-2 mt-12">
                 <button
                   type="button"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  onClick={() => {
+                    const prev = Math.max(1, currentPage - 1)
+                    setCurrentPage(prev)
+                    if (typeof window !== 'undefined') window.scrollTo({ top: 120, behavior: 'smooth' })
+                  }}
                   disabled={currentPage === 1}
                   className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
@@ -250,7 +288,10 @@ export default function ProductsPage() {
                     <button
                       key={page}
                       type="button"
-                      onClick={() => setCurrentPage(page)}
+                      onClick={() => {
+                        setCurrentPage(page)
+                        if (typeof window !== 'undefined') window.scrollTo({ top: 120, behavior: 'smooth' })
+                      }}
                       className={`w-10 h-10 rounded-xl text-sm font-semibold transition-all ${
                         currentPage === page
                           ? 'bg-black text-white shadow-sm'
@@ -264,7 +305,11 @@ export default function ProductsPage() {
 
                 <button
                   type="button"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() => {
+                    const next = Math.min(totalPages, currentPage + 1)
+                    setCurrentPage(next)
+                    if (typeof window !== 'undefined') window.scrollTo({ top: 120, behavior: 'smooth' })
+                  }}
                   disabled={currentPage === totalPages}
                   className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >

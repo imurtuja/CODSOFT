@@ -11,8 +11,27 @@ import { fetchCached } from '../../../utils/apiCache'
 export default function ProductDetailClient({ initialProduct, productId }) {
   const router = useRouter()
   const currentId = productId || initialProduct?._id || initialProduct?.id
-  const [product, setProduct] = useState(initialProduct || null)
-  const [loading, setLoading] = useState(!initialProduct)
+  const [product, setProduct] = useState(() => {
+    if (initialProduct) return initialProduct
+    if (typeof window === 'undefined') return null
+    try {
+      const pid = currentId || window.location.pathname.split('/').pop()
+      if (pid) {
+        const preview = sessionStorage.getItem(`evercart_preview_${pid}`)
+        if (preview) return JSON.parse(preview)
+      }
+    } catch (e) {}
+    return null
+  })
+  const [loading, setLoading] = useState(() => {
+    if (initialProduct) return false
+    if (typeof window === 'undefined') return true
+    try {
+      const pid = currentId || window.location.pathname.split('/').pop()
+      if (pid && sessionStorage.getItem(`evercart_preview_${pid}`)) return false
+    } catch (e) {}
+    return true
+  })
   const [quantity, setQuantity] = useState(1)
   const [selectedImage, setSelectedImage] = useState(0)
   const [isInCart, setIsInCart] = useState(false)
@@ -46,7 +65,9 @@ export default function ProductDetailClient({ initialProduct, productId }) {
     if (!currentId) return
     try {
       const data = await fetchCached(`/api/products/${currentId}`)
-      setProduct(data)
+      if (data && (data._id || data.id)) {
+        setProduct((prev) => (prev ? { ...prev, ...data } : data))
+      }
     } catch (error) {
       console.error('Error fetching product:', error)
     } finally {
@@ -59,17 +80,13 @@ export default function ProductDetailClient({ initialProduct, productId }) {
       setProduct(initialProduct)
       setLoading(false)
       setSelectedImage(0)
-    }
-  }, [initialProduct])
-
-  useEffect(() => {
-    if (!initialProduct && currentId) {
+    } else if (currentId) {
       fetchProduct()
     }
     // Prefetch high-intent routes for instant 0ms transition
     router.prefetch('/cart')
     router.prefetch('/checkout')
-  }, [currentId, initialProduct, fetchProduct, router])
+  }, [initialProduct, currentId, fetchProduct, router])
 
   // Dynamically detect orientation of the active image
   useEffect(() => {

@@ -5,6 +5,18 @@ import ProductDetailClient from './ProductDetailClient'
 import NotFoundView from '../../../components/NotFoundView'
 
 export const revalidate = 60 // 60s background revalidation (ISR)
+export const dynamicParams = true // Allow dynamic rendering for new products
+
+export async function generateStaticParams() {
+  try {
+    await connectDB()
+    const products = await Product.find({ status: 'active' }).select('_id').lean()
+    return products.map((p) => ({ id: String(p._id) }))
+  } catch (error) {
+    console.error('Error generating static product params:', error)
+    return []
+  }
+}
 
 // High-speed in-memory server cache (<0.1ms retrieval for duplicate SSR & metadata queries)
 const productServerCache = new Map()
