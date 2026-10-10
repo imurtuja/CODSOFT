@@ -2,13 +2,19 @@
 import Link from 'next/link'
 
 export default function NotFoundView() {
-  const homeUrl = typeof window !== 'undefined' && window.location.host.startsWith('admin.')
-    ? 'https://evercart.murtuja.in'
-    : '/'
+  const getStorefrontUrl = (path = '/') => {
+    if (typeof window === 'undefined') return path
+    const host = window.location.host
+    const protocol = window.location.protocol
+    if (host.startsWith('admin.')) {
+      const cleanHost = host.replace(/^admin\./, '')
+      return `${protocol}//${cleanHost}${path}`
+    }
+    return path
+  }
 
-  const productsUrl = typeof window !== 'undefined' && window.location.host.startsWith('admin.')
-    ? 'https://evercart.murtuja.in/products'
-    : '/products'
+  const homeUrl = getStorefrontUrl('/')
+  const productsUrl = getStorefrontUrl('/products')
 
   return (
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-16 bg-white">

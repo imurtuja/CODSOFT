@@ -1,43 +1,50 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState, useCallback, memo } from 'react'
+import { useState, useEffect, useCallback, memo } from 'react'
+import { addToCart as saveProductToCart, isItemInCart } from '../utils/cartManager'
+import { toast } from './Toast'
 
 function ProductCard({ product }) {
   const [imageError, setImageError] = useState(false)
-  const [showViewCart, setShowViewCart] = useState(false)
+  const [isInCart, setIsInCart] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const [justAdded, setJustAdded] = useState(false)
   
-  const addToCart = useCallback((product) => {
-    const user = localStorage.getItem('currentUser')
-    if (!user) {
-      window.location.href = '/login'
+  const checkCartState = useCallback(() => {
+    const pid = product?._id || product?.id
+    if (pid) {
+      setIsInCart(isItemInCart(pid))
+    }
+  }, [product?._id, product?.id])
+
+  useEffect(() => {
+    checkCartState()
+    window.addEventListener('cartUpdated', checkCartState)
+    return () => window.removeEventListener('cartUpdated', checkCartState)
+  }, [checkCartState])
+  
+  const addToCart = useCallback((e) => {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    if (!product || (!product._id && !product.id) || product.stock <= 0) {
       return
     }
 
-    if (!product || !product._id && !product.id) {
-      return
-    }
+    setAdding(true)
+    setJustAdded(true)
+    saveProductToCart(product, 1)
+    setIsInCart(true)
+    
+    const shortName = product.name?.length > 22 ? `${product.name.slice(0, 22)}…` : (product.name || 'Item')
+    toast.success(`Added "${shortName}" to cart!`)
 
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]')
-    const productId = product._id || product.id
-    const existingItem = cart.find(item => item.id === productId)
-    
-    if (existingItem) {
-      existingItem.quantity += 1
-    } else {
-      cart.push({
-        id: productId,
-        name: product.name || 'Unknown Product',
-        price: product.price || 0,
-        image: product.images?.[0] || product.image || '',
-        quantity: 1,
-        brand: product.brand || 'Unknown Brand'
-      })
-    }
-    
-    localStorage.setItem('cart', JSON.stringify(cart))
-    window.dispatchEvent(new Event('cartUpdated'))
-    setShowViewCart(true)
-  }, [])
+    setTimeout(() => setAdding(false), 250)
+    setTimeout(() => setJustAdded(false), 1400)
+  }, [product])
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-IN', {
@@ -66,11 +73,11 @@ function ProductCard({ product }) {
   }
 
   return (
-    <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col h-full">
+    <div className="bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-gray-200/80 overflow-hidden hover:shadow-md hover:border-gray-300 transition-all duration-200 group flex flex-col h-full">
       {/* Image Section */}
       <div className="relative overflow-hidden">
-        <Link href={`/product/${product._id || product.id}`}>
-          <div className="aspect-square w-full">
+        <Link href={`/product/${product._id || product.id}`} prefetch={true}>
+          <div className="aspect-square w-full bg-gray-50/50">
             {imageUrl && !imageError && !isBadUrl(imageUrl) ? (
               <Image
                 src={imageUrl}
@@ -81,29 +88,22 @@ function ProductCard({ product }) {
                 onError={() => setImageError(true)}
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+              <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
                 <div className="text-center">
                   <div className="text-3xl sm:text-4xl text-gray-400 mb-1 sm:mb-2">📦</div>
-                  <div className="text-xs sm:text-sm text-gray-500 font-medium">No Image</div>
+                  <div className="text-xs text-gray-500 font-medium">No Image</div>
                 </div>
               </div>
             )}
           </div>
         </Link>
         
-        {/* Discount Badge */}
-        {discount > 0 && (
-          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-            {discount}% OFF
-          </div>
-        )}
-        
         {/* Stock Badge */}
-        <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
-          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+        <div className="absolute top-2 right-2">
+          <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full backdrop-blur-sm shadow-sm ${
             product.stock > 0 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-red-100 text-red-800'
+              ? 'bg-emerald-600/90 text-white' 
+              : 'bg-rose-600/90 text-white'
           }`}>
             {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
           </span>
@@ -111,88 +111,94 @@ function ProductCard({ product }) {
       </div>
       
       {/* Content Section */}
-      <div className="p-3 sm:p-5 flex flex-col flex-grow">
+      <div className="p-3.5 sm:p-4 flex flex-col flex-grow">
         {/* Brand */}
-        <p className="text-xs text-gray-500 uppercase tracking-wider font-medium mb-1">
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
           {product.brand}
         </p>
         
         {/* Product Name */}
-        <Link href={`/product/${product._id || product.id}`}>
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 hover:text-blue-600 transition-colors line-clamp-2 min-h-[2.5rem] sm:min-h-[1.5rem]">
+        <Link href={`/product/${product._id || product.id}`} prefetch={true}>
+          <h3 className="text-sm sm:text-base font-bold text-gray-900 leading-snug line-clamp-2 hover:text-black transition-colors mb-1.5">
             {product.name}
           </h3>
         </Link>
 
-        {/* Rating */}
-        <div className="mb-3 min-h-[1.5rem]">
-          {product.rating && (
-            <div className="flex items-center">
-              <div className="flex items-center">
-                {[...Array(5)].map((_, i) => (
-                  <span
-                    key={i}
-                    className={`text-sm ${
-                      i < Math.floor(product.rating) ? 'text-yellow-400' : 'text-gray-300'
-                    }`}
-                  >
-                    ★
-                  </span>
-                ))}
-              </div>
-              <span className="ml-2 text-sm text-gray-600 font-medium">({product.rating})</span>
+        {/* Rating Badge */}
+        {product.rating ? (
+          <div className="flex items-center gap-1.5 mb-2">
+            <div className="flex items-center gap-0.5 bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 rounded text-[11px] font-bold text-amber-900">
+              <span className="text-amber-500 text-xs">★</span>
+              <span>{product.rating}</span>
             </div>
-          )}
-        </div>
+            <span className="text-[11px] text-gray-400 font-medium">Ratings</span>
+          </div>
+        ) : (
+          <div className="h-5 mb-2" />
+        )}
 
         {/* Price Section */}
-        <div className="mb-3 sm:mb-4 min-h-[3.5rem] sm:min-h-[4rem]">
-          <div className="flex items-center space-x-2 mb-1">
-            <span className="text-xl sm:text-2xl font-bold text-gray-900">
+        <div className="mb-3">
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="text-lg sm:text-xl font-black text-gray-900 tracking-tight">
               {formatPrice(product.price)}
             </span>
             {discount > 0 && (
-              <span className="text-sm text-gray-500 line-through">
-                {formatPrice(product.originalPrice)}
-              </span>
-            )}
-          </div>
-          <div className="min-h-[1.25rem]">
-            {discount > 0 && (
-              <p className="text-xs sm:text-sm text-green-600 font-medium">
-                You save {formatPrice(product.originalPrice - product.price)}
-              </p>
+              <>
+                <span className="text-xs text-gray-400 line-through">
+                  {formatPrice(product.originalPrice)}
+                </span>
+                <span className="text-[11px] font-extrabold text-emerald-600">
+                  {discount}% off
+                </span>
+              </>
             )}
           </div>
         </div>
 
         {/* Action Buttons - Always at bottom */}
-        <div className="flex gap-2 mt-auto">
-          {showViewCart ? (
+        <div className="flex items-center gap-2 mt-auto pt-1">
+          {isInCart && !justAdded ? (
             <Link
               href="/cart"
-              className="flex-1 py-2.5 px-4 bg-green-600 text-white rounded-lg font-medium text-sm text-center hover:bg-green-700 transition-all duration-200 whitespace-nowrap"
+              prefetch={true}
+              className="flex-1 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm whitespace-nowrap active:scale-95"
             >
-              View Cart
+              <span>✓</span>
+              <span>In Cart</span>
             </Link>
           ) : (
             <button
-              onClick={() => addToCart(product)}
-              disabled={product.stock <= 0}
-              className={`flex-1 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
-                product.stock > 0 
-                  ? 'bg-black text-white hover:bg-gray-800 hover:shadow-md' 
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              type="button"
+              onClick={addToCart}
+              disabled={product.stock <= 0 || adding}
+              className={`flex-1 h-9 rounded-lg font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm disabled:opacity-50 whitespace-nowrap active:scale-95 cursor-pointer ${
+                justAdded
+                  ? 'bg-emerald-600 text-white scale-[1.02]'
+                  : 'bg-black hover:bg-neutral-800 text-white'
               }`}
             >
-              {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+              {justAdded ? (
+                <>
+                  <span className="text-sm">✓</span>
+                  <span>Added!</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  <span>Add to Cart</span>
+                </>
+              )}
             </button>
           )}
           <Link
             href={`/product/${product._id || product.id}`}
-            className="flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 rounded-lg font-medium text-sm text-center hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+            prefetch={true}
+            className="h-9 px-3 bg-gray-50 text-gray-700 hover:text-black hover:bg-gray-100 border border-gray-200 rounded-lg font-semibold text-xs flex items-center justify-center transition-all whitespace-nowrap active:scale-95"
           >
-            View Details
+            View
           </Link>
         </div>
       </div>

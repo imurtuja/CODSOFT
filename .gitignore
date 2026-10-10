@@ -1,4 +1,5 @@
-EverCart/.env
+EverCart/.env*
+.env*
 EverCart/node_modules/
 EverCart/.next/
 node_modules/

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
 
 const orderItemSchema = new mongoose.Schema({
-  product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+  product: { type: mongoose.Schema.Types.Mixed, ref: 'Product' },
   name: String,
   brand: String,
   price: Number,
@@ -36,7 +36,7 @@ const paymentSchema = new mongoose.Schema({
 
 const orderSchema = new mongoose.Schema({
   orderId: { type: String, unique: true },
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  user: { type: mongoose.Schema.Types.Mixed, ref: 'User' },
   items: [orderItemSchema],
   total: Number,
   subtotal: Number,
@@ -50,7 +50,22 @@ const orderSchema = new mongoose.Schema({
   paymentId: String,
   razorpayOrderId: String,
   orderDate: { type: Date, default: Date.now },
-  totalAmount: Number
+  totalAmount: Number,
+  invoiceNumber: { type: String, sparse: true },
+  invoiceDate: { type: Date },
+  taxDetails: {
+    taxableAmount: Number,
+    cgst: Number,
+    sgst: Number,
+    totalGst: Number,
+    rate: { type: Number, default: 18 }
+  }
 })
+
+orderSchema.index({ user: 1, orderDate: -1 })
+
+if (mongoose.models && mongoose.models.Order) {
+  delete mongoose.models.Order
+}
 
 export default mongoose.models.Order || mongoose.model('Order', orderSchema)

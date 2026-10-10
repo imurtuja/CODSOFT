@@ -45,12 +45,25 @@ export async function POST(request) {
       role: 'user'
     })
     
+    // Import jwt is needed at top or use inline
+    const jwt = (await import('jsonwebtoken')).default
+    const token = jwt.sign(
+      {
+        userId: user._id,
+        email: user.email,
+        role: user.role || 'user'
+      },
+      process.env.JWT_SECRET || 'your-secure-secret-key',
+      { expiresIn: '7d' }
+    )
+
     // Return user without password
     const { password: _, ...userWithoutPassword } = user.toObject()
     
     return NextResponse.json({
       success: true,
       message: 'User created successfully',
+      token,
       user: userWithoutPassword
     })
     

@@ -1,37 +1,94 @@
 import { NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 
-export function requireAuth(request) {
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secure-secret-key'
+
+export function getAuthUser(request) {
   try {
+    let token = null
+
+    // 1. Check Bearer Authorization header
     const authHeader = request.headers.get('authorization')
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Authorization header missing or invalid' },
-        { status: 401 }
-      )
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7).trim()
     }
 
-    const token = authHeader.substring(7) // Remove 'Bearer ' prefix
+    // 2. Check HTTP cookie
+    if (!token && typeof request.cookies?.get === 'function') {
+      token = request.cookies.get('token')?.value || request.cookies.get('admin_token')?.value
+    }
+
+    if (!token) {
+      token = request.headers.get('x-admin-token')
+    }
+
+    if (!token) return null
+
+    const decoded = jwt.verify(token, JWT_SECRET)
+    return {
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role || 'user'
+    }
+  } catch (error) {
+    return null
+  }
+}
+
+export function requireAuth(request) {
+  try {
+    let token = null
+
+    const authHeader = request.headers.get('authorization')
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7).trim()
+    }
+
+    if (!token && typeof request.cookies?.get === 'function') {
+      token = request.cookies.get('token')?.value || request.cookies.get('admin_token')?.value
+    }
+
+    if (!token) {
+      token = request.headers.get('x-admin-token')
+    }
     
     if (!token) {
       return NextResponse.json(
-        { error: 'Token missing' },
+        { error: 'Authorization header or token cookie missing' },
         { status: 401 }
       )
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const decoded = jwt.verify(token, JWT_SECRET)
     
     return {
       userId: decoded.userId,
-      email: decoded.email
+      email: decoded.email,
+      role: decoded.role || 'user'
     }
   } catch (error) {
-    console.error('Auth error:', error.message)
     return NextResponse.json(
       { error: 'Invalid or expired token' },
       { status: 401 }
     )
   }
+}
+
+export function getCookieDomain(request) {
+  try {
+    const host = (typeof request?.headers?.get === 'function' ? request.headers.get('host') : '') || ''
+    const cleanHost = host.split(':')[0]
+    if (!cleanHost || cleanHost === 'localhost' || cleanHost === '127.0.0.1') {
+      return undefined
+    }
+    if (cleanHost.includes('evercart.murtuja.in')) {
+      return '.evercart.murtuja.in'
+    }
+    const parts = cleanHost.split('.')
+    if (parts.length >= 2) {
+      const root = parts.slice(-2).join('.')
+      return `.${root}`
+    }
+  } catch (e) {}
+  return undefined
 }

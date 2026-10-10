@@ -3,6 +3,7 @@ import connectDB from '../../../../lib/mongodb.js'
 import User from '../../../../models/User.js'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import { getCookieDomain } from '../../../../lib/auth.js'
 
 export async function POST(request) {
   try {
@@ -40,7 +41,8 @@ export async function POST(request) {
     const token = jwt.sign(
       { 
         userId: user._id, 
-        email: user.email 
+        email: user.email,
+        role: user.role || 'user'
       },
       process.env.JWT_SECRET || 'your-secure-secret-key',
       { expiresIn: '7d' }
@@ -49,12 +51,36 @@ export async function POST(request) {
     // Return user without password
     const { password: _, ...userWithoutPassword } = user.toObject()
     
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: 'Login successful',
       token,
       user: userWithoutPassword
     })
+
+    // Set cookie for browser sessions (scoped to root domain so admin subdomain also receives it)
+    const cookieDomain = getCookieDomain(request)
+    const isProd = process.env.NODE_ENV === 'production'
+
+    const cookieOpts = {
+      path: '/',
+      sameSite: 'lax',
+      httpOnly: false,
+      secure: isProd,
+      maxAge: 7 * 24 * 60 * 60,
+      ...(cookieDomain ? { domain: cookieDomain } : {})
+    }
+
+    response.cookies.set('token', token, cookieOpts)
+
+    if (user.role === 'admin') {
+      response.cookies.set('admin_token', token, {
+        ...cookieOpts,
+        httpOnly: true // Secure HttpOnly for admin token
+      })
+    }
+    
+    return response
     
   } catch (error) {
     console.error('Login error:', error)

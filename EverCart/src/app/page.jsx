@@ -1,167 +1,443 @@
-'use client'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState, useEffect, useCallback, Suspense } from 'react'
 import ProductCard from '../components/ProductCard'
+import { getCategoryIcon, ChevronRightIcon } from '../components/CategoryIcons'
+import connectDB from '../lib/mongodb.js'
+import Product from '../models/Product.js'
 
-export default function Home() {
-  const [featuredProducts, setFeaturedProducts] = useState([])
-  const [loading, setLoading] = useState(true)
+export const revalidate = 60 // Revalidate in background every 60 seconds (ISR)
 
-  const categories = [
-    { name: 'Electronics', href: '/category/electronics', icon: '📱' },
-    { name: 'Laptops', href: '/category/laptops', icon: '💻' },
-    { name: 'Gaming', href: '/category/gaming', icon: '🎮' },
-    { name: 'Audio', href: '/category/audio', icon: '🎧' },
-    { name: 'Cameras', href: '/category/cameras', icon: '📷' },
-    { name: 'Accessories', href: '/category/accessories', icon: '🔌' },
-  ]
+const CATEGORIES = [
+  {
+    name: 'Electronics',
+    slug: 'electronics',
+    href: '/category/electronics',
+    tagline: 'Phones & Smart Wearables',
+  },
+  {
+    name: 'Laptops',
+    slug: 'laptops',
+    href: '/category/laptops',
+    tagline: 'Ultrabooks & Workstations',
+  },
+  {
+    name: 'Gaming',
+    slug: 'gaming',
+    href: '/category/gaming',
+    tagline: 'Consoles & Handheld Systems',
+  },
+  {
+    name: 'Audio',
+    slug: 'audio',
+    href: '/category/audio',
+    tagline: 'Noise-Canceling & Hi-Fi',
+  },
+  {
+    name: 'Cameras',
+    slug: 'cameras',
+    href: '/category/cameras',
+    tagline: 'Mirrorless & 4K Gimbals',
+  },
+  {
+    name: 'Accessories',
+    slug: 'accessories',
+    href: '/category/accessories',
+    tagline: 'Keyboards, Mice & Docks',
+  },
+]
 
-  const fetchFeaturedProducts = useCallback(async () => {
-    setLoading(true)
-    const response = await fetch('/api/products?featured=true&limit=4')
-    const data = await response.json()
-    const products = data.products || []
-    const featured = products.filter(product => product.isFeatured === true)
-    setFeaturedProducts(featured)
-    setLoading(false)
-  }, [])
+// Server memory cache for instant <1ms response
+let cachedHomeData = null
+let lastCacheTime = 0
+const CACHE_TTL_MS = 60000 // 60s
 
-  useEffect(() => {
-    fetchFeaturedProducts()
-  }, [fetchFeaturedProducts])
+export function clearHomeServerCache() {
+  cachedHomeData = null
+  lastCacheTime = 0
+}
+
+async function getHomeData() {
+  const now = Date.now()
+  if (cachedHomeData && now - lastCacheTime < CACHE_TTL_MS) {
+    return cachedHomeData
+  }
+
+  try {
+    await connectDB()
+
+    const [spotlightDoc, featuredDocs] = await Promise.all([
+      Product.findOne({ status: 'active', isSpotlight: true })
+        .select('name brand description price originalPrice category images rating status isSpotlight isFeatured stock')
+        .lean(),
+      Product.find({ status: 'active', isFeatured: true })
+        .select('name brand description price originalPrice category images rating status isSpotlight isFeatured stock')
+        .limit(8)
+        .sort({ createdAt: -1 })
+        .lean(),
+    ])
+
+    const spotlight = spotlightDoc || (featuredDocs && featuredDocs.length > 0 ? featuredDocs[0] : null)
+
+    const data = {
+      spotlightProduct: spotlight ? JSON.parse(JSON.stringify(spotlight)) : null,
+      featuredProducts: featuredDocs ? JSON.parse(JSON.stringify(featuredDocs)) : [],
+    }
+
+    cachedHomeData = data
+    lastCacheTime = now
+    return data
+  } catch (error) {
+    console.error('Error fetching home page products on server:', error)
+    if (cachedHomeData) return cachedHomeData
+    return { spotlightProduct: null, featuredProducts: [] }
+  }
+}
+
+export default async function Home() {
+  const { spotlightProduct, featuredProducts } = await getHomeData()
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-20">
+    <div className="min-h-screen bg-gray-50/40">
+      {/* Light Theme Hero Section */}
+      <section className="bg-gradient-to-b from-gray-50 via-white to-gray-50/60 border-b border-gray-200/80 py-12 sm:py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Welcome to <span className="text-blue-400">EverCart</span>
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 text-gray-300 max-w-3xl mx-auto">
-              Discover premium electronics and cutting-edge gadgets at unbeatable prices
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link 
-                href="/products" 
-                className="bg-white text-black px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-              >
-                Shop Now
-              </Link>
-              <Link 
-                href="/categories" 
-                className="border border-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-black transition-colors"
-              >
-                View Categories
-              </Link>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+            {/* Left Content */}
+            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-xs font-semibold text-gray-700">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>Curated Consumer Technology</span>
+              </div>
+
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-[1.12]">
+                Cutting-Edge Tech.{' '}
+                <span className="block text-gray-400 font-bold">
+                  Built for Every Task.
+                </span>
+              </h1>
+
+              <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
+                Explore our handpicked catalog of flagship smartphones, high-performance laptops, immersive gaming hardware, and studio-grade acoustics.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-3.5 justify-center lg:justify-start pt-2">
+                <Link
+                  href="/products"
+                  prefetch={true}
+                  className="px-7 py-3.5 rounded-xl bg-black text-white font-semibold hover:bg-gray-800 active:scale-95 transition-all text-sm text-center shadow-sm cursor-pointer"
+                >
+                  Shop All Products
+                </Link>
+                <Link
+                  href="/categories"
+                  prefetch={true}
+                  className="px-7 py-3.5 rounded-xl bg-white text-gray-800 font-semibold hover:bg-gray-50 border border-gray-300 active:scale-95 transition-all text-sm flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  <span>Browse Departments</span>
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+
+              {/* Trust Metrics */}
+              <div className="grid grid-cols-3 gap-6 pt-8 border-t border-gray-200/80 max-w-md mx-auto lg:mx-0 text-center lg:text-left">
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">40+</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Curated Products</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">100%</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Brand Genuine</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">₹0</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Free Delivery</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Dynamic Spotlight Card */}
+            <div className="lg:col-span-5 flex justify-center">
+              {spotlightProduct ? (
+                <Link
+                  href={`/product/${spotlightProduct._id}`}
+                  prefetch={true}
+                  className="group block w-full max-w-md bg-white border border-gray-200/90 rounded-2xl overflow-hidden shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer"
+                >
+                  {/* Top-to-Middle Faded Image Container */}
+                  <div className="relative w-full h-80 sm:h-92 overflow-hidden bg-gray-50">
+                    <Image
+                      src={spotlightProduct.images?.[0] || spotlightProduct.image || 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=1000&q=80'}
+                      alt={spotlightProduct.name}
+                      fill
+                      priority={true}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 450px"
+                      className="object-cover object-center"
+                    />
+
+                    {/* Smooth Fade Effect: Starts at ~65% and softly turns into solid white */}
+                    <div className="absolute inset-x-0 bottom-0 h-[50%] bg-gradient-to-b from-transparent via-white/85 to-white pointer-events-none" />
+
+                    {/* Floating Badges */}
+                    <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-10">
+                      <span className="px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-white text-[11px] font-semibold tracking-wide shadow-sm">
+                        Spotlight Deal
+                      </span>
+                      <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-gray-900 text-xs font-bold shadow-sm flex items-center gap-1">
+                        <span className="text-amber-500">★</span> {spotlightProduct.rating || 4.8}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Card Content Section - Starts directly on the faded image area */}
+                  <div className="relative -mt-20 sm:-mt-24 px-6 pb-6 pt-0 z-10">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-bold uppercase tracking-wider text-gray-600">
+                        {spotlightProduct.brand}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        In Stock & Ready to Ship
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 leading-snug line-clamp-1 group-hover:text-black transition-colors">
+                      {spotlightProduct.name}
+                    </h3>
+
+                    {spotlightProduct.description && (
+                      <p className="text-xs sm:text-sm text-gray-500 line-clamp-2 mt-1.5 leading-relaxed">
+                        {spotlightProduct.description}
+                      </p>
+                    )}
+
+                    <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-[11px] text-gray-400 font-medium">Special Price</div>
+                        <div className="flex items-baseline gap-2 mt-0.5">
+                          <span className="text-2xl font-extrabold text-gray-900 tracking-tight">
+                            ₹{spotlightProduct.price?.toLocaleString('en-IN')}
+                          </span>
+                          {spotlightProduct.originalPrice && spotlightProduct.originalPrice > spotlightProduct.price && (
+                            <>
+                              <span className="text-xs text-gray-400 line-through">
+                                ₹{spotlightProduct.originalPrice.toLocaleString('en-IN')}
+                              </span>
+                              <span className="text-xs font-extrabold text-emerald-600">
+                                {Math.round(((spotlightProduct.originalPrice - spotlightProduct.price) / spotlightProduct.originalPrice) * 100)}% off
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <span className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-black text-white text-xs sm:text-sm font-semibold group-hover:bg-gray-800 transition-colors shadow-xs">
+                        <span>View Product</span>
+                        <ChevronRightIcon className="w-3.5 h-3.5" />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ) : (
+                <div className="w-full max-w-md h-96 bg-white rounded-2xl border border-gray-200 animate-pulse"></div>
+              )}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section className="py-16 bg-gray-50">
+      {/* Trust & Guarantees Strip */}
+      <section className="bg-white border-b border-gray-200 py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">
-            Shop by Category
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {categories.map((category) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-800 shrink-0">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-bold text-gray-900">100% Genuine</h4>
+                <p className="text-xs text-gray-500">Official brand warranties</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-800 shrink-0">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-bold text-gray-900">Express Delivery</h4>
+                <p className="text-xs text-gray-500">Fast pan-India dispatch</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-800 shrink-0">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-bold text-gray-900">7-Day Returns</h4>
+                <p className="text-xs text-gray-500">Hassle-free replacement</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-800 shrink-0">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-bold text-gray-900">Secure Checkout</h4>
+                <p className="text-xs text-gray-500">256-bit SSL encrypted</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Shop by Department */}
+      <section className="py-12 sm:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+                Shop by Department
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Find the right hardware across our specialized technology categories.
+              </p>
+            </div>
+            <Link
+              href="/categories"
+              className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-gray-900 hover:underline underline-offset-4"
+            >
+              <span>All Departments</span>
+              <ChevronRightIcon className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-5">
+            {CATEGORIES.map((cat) => (
               <Link
-                key={category.name}
-                href={category.href}
-                className="bg-white rounded-lg p-6 text-center hover:shadow-lg transition-shadow border border-gray-200"
+                key={cat.name}
+                href={cat.href}
+                prefetch={true}
+                className="group bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-xs hover:border-gray-900 hover:shadow-md active:scale-[0.98] transition-all flex flex-col justify-between cursor-pointer"
               >
-                <div className="text-4xl mb-3">{category.icon}</div>
-                <h3 className="font-semibold text-gray-900">
-                  {category.name}
-                </h3>
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-800 group-hover:bg-black group-hover:text-white transition-all mb-3">
+                    {getCategoryIcon(cat.slug, 'w-5 h-5')}
+                  </div>
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base group-hover:text-black mb-1">
+                    {cat.name}
+                  </h3>
+                  <p className="text-xs text-gray-500 line-clamp-1">
+                    {cat.tagline}
+                  </p>
+                </div>
+
+                <div className="mt-3.5 pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-gray-900">
+                  <span>Explore</span>
+                  <ChevronRightIcon className="w-3.5 h-3.5 text-gray-400 group-hover:text-black group-hover:translate-x-0.5 transition-all" />
+                </div>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Featured Products Section */}
-      <section className="py-16 bg-white">
+      {/* Featured Products */}
+      <section className="py-12 bg-white border-y border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Featured Products</h2>
-            <p className="text-lg text-gray-600">Handpicked products just for you</p>
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+                Featured Highlights
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Top-rated hardware and customer favorites across our store.
+              </p>
+            </div>
+            <Link
+              href="/products"
+              className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-gray-900 hover:underline underline-offset-4"
+            >
+              <span>View all products</span>
+              <ChevronRightIcon className="w-3.5 h-3.5" />
+            </Link>
           </div>
 
-          {loading ? (
-            <div className="flex flex-wrap justify-center gap-6">
-              {[...Array(4)].map((_, index) => (
-                <div key={index} className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] max-w-sm bg-white rounded-lg shadow-sm border border-gray-200 p-4 animate-pulse">
-                  <div className="w-full h-48 bg-gray-200 rounded-lg mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
-                  <div className="flex space-x-2">
-                    <div className="h-8 bg-gray-200 rounded flex-1"></div>
-                    <div className="h-8 bg-gray-200 rounded flex-1"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : featuredProducts.length > 0 ? (
-            <div className="flex flex-wrap justify-center gap-6">
+          {featuredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {featuredProducts.map((product) => (
-                <div key={product._id} className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] max-w-sm flex flex-col">
-                  <ProductCard product={product} />
-                </div>
+                <ProductCard key={product._id} product={product} />
               ))}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-500">No featured products available at the moment.</p>
+            <div className="text-center py-12 text-gray-500 text-sm">
+              No featured products available at the moment.
             </div>
           )}
-
-          <div className="text-center mt-12">
-            <Link
-              href="/products"
-              className="bg-black text-white px-8 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
-            >
-              View All Products
-            </Link>
-          </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-16 bg-gray-50">
+      {/* Promotional Banners (Clean, Evergreen Copy) */}
+      <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Promo 1: Gaming */}
+            <div className="relative overflow-hidden bg-white rounded-2xl p-8 text-gray-900 flex flex-col justify-between border border-gray-200 shadow-xs hover:border-gray-400 transition-colors">
+              <div className="space-y-3 max-w-sm">
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-gray-100 text-gray-800">
+                  Gaming Department
+                </span>
+                <h3 className="text-2xl font-bold tracking-tight text-gray-900">
+                  Next-Gen Gaming & Consoles
+                </h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  High-refresh rate hardware, ultra-fast handheld gaming systems, and ergonomic pro wireless controllers.
+                </p>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-gray-900">Fast Delivery</h3>
-              <p className="text-gray-600">Quick and reliable delivery to your doorstep</p>
+              <div className="mt-6 pt-4">
+                <Link
+                  href="/category/gaming"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-black text-white text-xs sm:text-sm font-semibold hover:bg-gray-800 transition-colors"
+                >
+                  <span>Explore Gaming Hardware</span>
+                  <ChevronRightIcon className="w-3.5 h-3.5" />
+                </Link>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+
+            {/* Promo 2: Studio Audio */}
+            <div className="relative overflow-hidden bg-white rounded-2xl p-8 text-gray-900 flex flex-col justify-between border border-gray-200 shadow-xs hover:border-gray-400 transition-colors">
+              <div className="space-y-3 max-w-sm">
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-gray-100 text-gray-800">
+                  Audio & Acoustics
+                </span>
+                <h3 className="text-2xl font-bold tracking-tight text-gray-900">
+                  Studio Acoustics & Noise Canceling
+                </h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Premium active noise cancellation, studio-grade wireless earbuds, and room-filling acoustic home sound.
+                </p>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-gray-900">Secure Payment</h3>
-              <p className="text-gray-600">Safe and secure payment processing</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5z" />
-                </svg>
+              <div className="mt-6 pt-4">
+                <Link
+                  href="/category/audio"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-black text-white text-xs sm:text-sm font-semibold hover:bg-gray-800 transition-colors"
+                >
+                  <span>Discover Audio Gear</span>
+                  <ChevronRightIcon className="w-3.5 h-3.5" />
+                </Link>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-gray-900">24/7 Support</h3>
-              <p className="text-gray-600">Round the clock customer support</p>
             </div>
           </div>
         </div>

@@ -13,6 +13,15 @@ const addressSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 })
 
+const cartItemSchema = new mongoose.Schema({
+  id: String,
+  name: String,
+  price: Number,
+  image: String,
+  quantity: { type: Number, default: 1 },
+  brand: String
+}, { _id: false })
+
 const userSchema = new mongoose.Schema({
   firstName: String,
   lastName: String,
@@ -22,6 +31,7 @@ const userSchema = new mongoose.Schema({
   isVerified: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
   addresses: [addressSchema],
+  cart: { type: [cartItemSchema], default: [] },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 })

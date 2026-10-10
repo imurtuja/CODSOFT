@@ -2,36 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 export default function Footer() {
+  const pathname = usePathname()
   const currentYear = new Date().getFullYear()
-  const [isOnAdmin, setIsOnAdmin] = useState(false)
 
-  useEffect(() => {
-    setIsOnAdmin(typeof window !== 'undefined' && window.location.host.startsWith('admin.'))
-  }, [])
-
-  const getMainUrl = (path = '') => {
-    if (typeof window === 'undefined') return path
-    const host = window.location.host
-    if (host.startsWith('admin.')) {
-      const protocol = window.location.protocol
-      if (host.includes('localhost')) {
-        return `${protocol}//${host.replace(/^admin\./, '')}${path}`
-      }
-      return `https://evercart.murtuja.in${path}`
-    }
-    return path
+  if (pathname === '/admin' || pathname?.startsWith('/admin/')) {
+    return null
   }
 
   const renderLink = (href, label, className) => {
-    if (isOnAdmin) {
-      return (
-        <a href={getMainUrl(href)} className={className}>
-          {label}
-        </a>
-      )
-    }
     return (
       <Link href={href} prefetch={false} className={className}>
         {label}
@@ -73,21 +54,12 @@ export default function Footer() {
 
           {/* Company Info / Website Branding (Order 2 on mobile, Order 1 on desktop) */}
           <div className="order-2 lg:order-1 max-w-md w-full">
-            {isOnAdmin ? (
-              <a href={getMainUrl('/')} className="inline-flex items-center space-x-2 mb-4 group">
-                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <span className="text-black font-bold text-sm">EC</span>
-                </div>
-                <span className="text-xl font-bold tracking-tight">EverCart</span>
-              </a>
-            ) : (
-              <Link href="/" prefetch={false} className="inline-flex items-center space-x-2 mb-4 group">
-                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <span className="text-black font-bold text-sm">EC</span>
-                </div>
-                <span className="text-xl font-bold tracking-tight">EverCart</span>
-              </Link>
-            )}
+            <Link href="/" prefetch={false} className="inline-flex items-center space-x-2 mb-4 group">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+                <span className="text-black font-bold text-sm">EC</span>
+              </div>
+              <span className="text-xl font-bold tracking-tight">EverCart</span>
+            </Link>
             <p className="text-gray-400 mb-6 text-sm sm:text-base leading-relaxed">
               Your trusted destination for premium electronics and cutting-edge gadgets. 
               Quality products with exceptional service.

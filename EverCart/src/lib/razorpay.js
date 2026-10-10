@@ -1,7 +1,7 @@
-// Simple Razorpay integration
+// Razorpay configuration referencing environment variables
 export const razorpayConfig = {
-  key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'thisissupersecret'
+  key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || '',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || ''
 }
 
 export const createRazorpayOrder = async (amount, orderId) => {

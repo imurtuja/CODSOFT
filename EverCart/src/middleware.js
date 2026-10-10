@@ -44,7 +44,13 @@ export function middleware(request) {
     // 1. Root path '/' on admin subdomain renders the Admin Dashboard
     // The browser URL remains admin.evercart.murtuja.in without /admin
     if (pathname === '/') {
-      const response = NextResponse.rewrite(new URL('/admin', request.url))
+      const reqHeaders = new Headers(request.headers)
+      reqHeaders.set('x-is-admin', 'true')
+      const response = NextResponse.rewrite(new URL('/admin', request.url), {
+        request: {
+          headers: reqHeaders,
+        },
+      })
       Object.entries(CORS_HEADERS).forEach(([k, v]) => response.headers.set(k, v))
       return response
     }
@@ -81,12 +87,24 @@ export function middleware(request) {
     return response
   }
 
-  // On the main domain (e.g. evercart.murtuja.in or localhost:3000):
-  // If someone directly visits /admin, redirect them to the admin subdomain root
+  // On the main domain:
   if (pathname === '/admin' || pathname === '/admin/' || pathname.startsWith('/admin/')) {
-    const redirectUrl = new URL('/', adminOrigin)
-    redirectUrl.search = request.nextUrl.search
-    const response = NextResponse.redirect(redirectUrl)
+    if (!host.includes('localhost')) {
+      const redirectUrl = new URL('/', adminOrigin)
+      redirectUrl.search = request.nextUrl.search
+      const response = NextResponse.redirect(redirectUrl)
+      Object.entries(CORS_HEADERS).forEach(([k, v]) => response.headers.set(k, v))
+      return response
+    }
+
+    // On localhost, allow direct /admin access with x-is-admin header
+    const reqHeaders = new Headers(request.headers)
+    reqHeaders.set('x-is-admin', 'true')
+    const response = NextResponse.next({
+      request: {
+        headers: reqHeaders,
+      },
+    })
     Object.entries(CORS_HEADERS).forEach(([k, v]) => response.headers.set(k, v))
     return response
   }

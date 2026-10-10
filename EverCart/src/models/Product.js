@@ -9,13 +9,14 @@ const productSchema = new mongoose.Schema({
   category: String,
   images: [String],
   features: [String],
-  specifications: { type: Map, of: String },
+  specifications: { type: mongoose.Schema.Types.Mixed, default: {} },
   stock: { type: Number, default: 0 },
-  sku: { type: String, unique: true },
+  sku: { type: String, unique: true, sparse: true },
   rating: { type: Number, min: 0, max: 5, default: 0 },
   status: { type: String, enum: ['active', 'inactive'], default: 'active' },
   tags: [String],
   isFeatured: { type: Boolean, default: false },
+  isSpotlight: { type: Boolean, default: false },
   sales: { type: Number, default: 0 },
   reviews: [{
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -31,6 +32,7 @@ const productSchema = new mongoose.Schema({
 
 productSchema.index({ name: 'text', description: 'text', brand: 'text' })
 productSchema.index({ status: 1, isFeatured: 1, createdAt: -1 })
+productSchema.index({ status: 1, isSpotlight: 1, createdAt: -1 })
 productSchema.index({ status: 1, category: 1, price: 1 })
 productSchema.index({ status: 1, price: 1 })
 productSchema.index({ status: 1, createdAt: -1 })
