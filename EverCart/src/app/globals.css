@@ -21,7 +21,7 @@ body {
   color: #000000;
 }
 
-/* Sleek Minimalist Scrollbar — Permanent Stability, Zero Jitter */
+/* Custom scrollbar styling */
 ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
@@ -148,7 +148,7 @@ input:focus, textarea:focus, select:focus {
   animation: circleReveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Instant Tactile Button Response Across the App */
+/* Interactive button styles */
 button, [role="button"], a {
   -webkit-tap-highlight-color: transparent;
 }
@@ -162,7 +162,7 @@ button:active:not(:disabled),
   opacity: 0.92;
 }
 
-/* High-Performance Skeleton Shimmer Engine */
+/* Skeleton shimmer animation */
 @keyframes shimmerWave {
   0% {
     background-position: -200% 0;
@@ -194,7 +194,7 @@ button:active:not(:disabled),
   animation: shimmerWave 1.5s ease-in-out infinite;
 }
 
-/* Modern Data Table & Numeric Typography */
+/* Tabular font utilities */
 .font-tabular {
   font-feature-settings: 'tnum', 'zero';
   font-variant-numeric: tabular-nums;
@@ -208,7 +208,7 @@ button:active:not(:disabled),
   letter-spacing: -0.025em;
 }
 
-/* Hide scrollbars cleanly while preserving scroll capability */
+/* Scrollbar hiding utility */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
   width: 0;
@@ -219,11 +219,7 @@ button:active:not(:disabled),
   scrollbar-width: none;
 }
 
-/* ==========================================================================
-   Interactive Add to Cart & Buy Now Buttons
-   ========================================================================== */
-
-/* Add to Cart Animated Button */
+/* Cart and checkout button animations */
 .evercart-add-to-cart-btn {
   position: relative;
   overflow: hidden;
@@ -286,7 +282,7 @@ button:active:not(:disabled),
   }
 }
 
-/* Buy Now Outlined Hover-Invert Button (Option 3: Balanced Monochrome) */
+/* Buy now button */
 .evercart-buy-now-btn {
   background-color: transparent;
   outline: 2px #181717 solid;

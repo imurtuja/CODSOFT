@@ -109,7 +109,7 @@ export default function Navbar() {
       const rawToken = localStorage.getItem('token')
       const token = (rawToken && rawToken !== 'null' && rawToken !== 'undefined') ? rawToken.trim() : null
       if (token) {
-        // Request secure 30s transfer ticket from admin-session endpoint
+        // Request session transfer ticket
         const res = await fetch('/api/auth/admin-session', {
           method: 'POST',
           headers: {
@@ -121,7 +121,7 @@ export default function Navbar() {
         if (res && res.ok) {
           const data = await res.json().catch(() => ({}))
           if (data.ticket) {
-            // Claim ticket on admin origin - sets first-party cookies and bridge HTML syncs localStorage!
+            // Claim ticket on admin origin to sync session cookies and localStorage
             window.location.href = `${targetUrl}/api/auth/admin-session?claim=${encodeURIComponent(data.ticket)}`
             return
           }
@@ -131,7 +131,7 @@ export default function Navbar() {
       console.error('Admin ticket transfer failed:', err)
     }
 
-    // Direct clean navigation fallback
+    // Direct navigation fallback
     window.location.href = targetUrl
   }
 

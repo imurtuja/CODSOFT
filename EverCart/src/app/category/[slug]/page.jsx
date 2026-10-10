@@ -78,7 +78,7 @@ export default async function CategoryPage({ params }) {
     console.error('Error fetching category products on server:', error)
   }
 
-  // Schema.org Breadcrumb
+  // Breadcrumb structured data
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',

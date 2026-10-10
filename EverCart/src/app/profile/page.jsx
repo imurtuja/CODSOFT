@@ -347,25 +347,25 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50/50 py-6 sm:py-8">
-      {/* Aligned 1:1 with Navbar Logo via max-w-7xl */}
+      {/* Content container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Breadcrumb Navigation */}
+        {/* Breadcrumb */}
         <nav className="flex items-center space-x-2 text-xs text-gray-500 mb-4">
           <Link href="/" className="hover:text-black transition-colors">Home</Link>
           <span className="text-gray-300">/</span>
           <span className="text-gray-900 font-medium">My Account</span>
         </nav>
 
-        {/* Profile Hero Header Card */}
+        {/* Profile header */}
         <div className="bg-white rounded-2xl border border-gray-200/90 shadow-2xs p-5 sm:p-6 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
-              {/* User Avatar Circle */}
+              {/* User avatar */}
               <div className="w-14 h-14 rounded-2xl bg-black text-white flex items-center justify-center text-lg font-black tracking-wider shadow-sm shrink-0">
                 {userInitials()}
               </div>
 
-              {/* User Identity Details */}
+              {/* User details */}
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight truncate">
@@ -382,7 +382,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Quick Summary Chips */}
+            {/* Quick actions */}
             <div className="flex items-center gap-2 pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100">
               <Link
                 href="/orders"
@@ -402,9 +402,9 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* 2-Column Responsive Workspace */}
+        {/* Profile layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Navigation Sidebar */}
+          {/* Navigation sidebar */}
           <div className="lg:col-span-4 sticky top-24 space-y-4">
             <div className="bg-white rounded-2xl border border-gray-200/90 shadow-2xs p-3 sm:p-4">
               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-3 py-1.5 block">
@@ -477,7 +477,7 @@ export default function ProfilePage() {
 
             </div>
 
-            {/* Quick Security Status Box */}
+            {/* Security status */}
             <div className="bg-white rounded-2xl border border-gray-200/90 shadow-2xs p-4 text-xs text-gray-600">
               <div className="flex items-center gap-2 text-emerald-700 font-bold mb-1">
                 <svg className="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
@@ -491,9 +491,9 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Right Column: Tab Panels */}
+          {/* Content panel */}
           <div className="lg:col-span-8">
-            {/* Tab 1: Profile Details */}
+            {/* Profile details */}
             {activeTab === 'profile' && (
               <div className="bg-white rounded-2xl border border-gray-200/90 shadow-2xs p-5 sm:p-6 animate-in fade-in duration-300">
                 <div className="pb-4 border-b border-gray-100 mb-6">
@@ -579,7 +579,7 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Tab 2: Saved Addresses */}
+            {/* Saved addresses */}
             {activeTab === 'addresses' && (
               <div className="bg-white rounded-2xl border border-gray-200/90 shadow-2xs p-5 sm:p-6 animate-in fade-in duration-300">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-gray-100 mb-6">
@@ -695,7 +695,7 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Tab 3: Security & Password */}
+            {/* Security settings */}
             {activeTab === 'password' && (
               <div className="bg-white rounded-2xl border border-gray-200/90 shadow-2xs p-5 sm:p-6 animate-in fade-in duration-300">
                 <div className="pb-4 border-b border-gray-100 mb-6">
@@ -762,7 +762,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Address Modal Dialog */}
+        {/* Address modal */}
         {showAddressModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xl max-w-lg w-full p-6 animate-in zoom-in-95 duration-200">

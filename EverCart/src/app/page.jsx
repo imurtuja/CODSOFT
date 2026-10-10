@@ -54,7 +54,7 @@ const CATEGORIES = [
   },
 ]
 
-// Server memory cache for instant <1ms response
+// In-memory cache for homepage data
 let cachedHomeData = null
 let lastCacheTime = 0
 const CACHE_TTL_MS = 60000 // 60s
@@ -117,7 +117,7 @@ function SpotlightSection({ spotlightProduct }) {
       prefetch={false}
       className="group block w-full max-w-md bg-white border border-gray-200/90 rounded-2xl overflow-hidden shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer"
     >
-      {/* Top-to-Middle Faded Image Container */}
+      {/* Product image */}
       <div className="relative w-full h-80 sm:h-92 overflow-hidden bg-gray-50">
         <Image
           src={spotlightProduct.images?.[0] || spotlightProduct.image || 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=1000&q=80'}
@@ -128,10 +128,10 @@ function SpotlightSection({ spotlightProduct }) {
           className="object-cover object-center"
         />
 
-        {/* Smooth Fade Effect: Starts at ~65% and softly turns into solid white */}
+        {/* Gradient overlay */}
         <div className="absolute inset-x-0 bottom-0 h-[50%] bg-gradient-to-b from-transparent via-white/85 to-white pointer-events-none" />
 
-        {/* Floating Badges */}
+        {/* Badges */}
         <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-10">
           <span className="px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-white text-[11px] font-semibold tracking-wide shadow-sm">
             Spotlight Deal
@@ -142,7 +142,7 @@ function SpotlightSection({ spotlightProduct }) {
         </div>
       </div>
 
-      {/* Card Content Section */}
+      {/* Product details */}
       <div className="relative -mt-20 sm:-mt-24 px-6 pb-6 pt-0 z-10">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs font-bold uppercase tracking-wider text-gray-600">
@@ -214,7 +214,7 @@ function FeaturedSection({ featuredProducts }) {
 
 export default async function Home() {
   const { spotlightProduct, featuredProducts } = await getHomeData()
-  // Google Structured Data for Organization & SearchAction
+  // Structured data for organization and search
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -248,17 +248,17 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50/40">
-      {/* Schema.org JSON-LD Script for Google Rich Results */}
+      {/* Structured data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Light Theme Hero Section */}
+      {/* Hero section */}
       <section className="bg-gradient-to-b from-gray-50 via-white to-gray-50/60 border-b border-gray-200/80 py-12 sm:py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-            {/* Left Content (Instantly rendered shell) */}
+            {/* Hero content */}
             <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-xs font-semibold text-gray-700">
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -313,7 +313,7 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Right Dynamic Spotlight Card */}
+            {/* Spotlight section */}
             <div className="lg:col-span-5 flex justify-center">
               <SpotlightSection spotlightProduct={spotlightProduct} />
             </div>
@@ -321,7 +321,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Trust & Guarantees Strip */}
+      {/* Trust features */}
       <section className="bg-white border-b border-gray-200 py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -376,7 +376,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Shop by Department */}
+      {/* Shop by department */}
       <section className="py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8">
@@ -428,7 +428,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Featured Products with Streaming Suspense */}
+      {/* Featured highlights */}
       <section className="py-12 bg-white border-y border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8">
@@ -454,11 +454,11 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Promotional Banners */}
+      {/* Promotional banners */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Promo 1: Gaming */}
+            {/* Gaming promo */}
             <div className="relative overflow-hidden bg-white rounded-2xl p-8 text-gray-900 flex flex-col justify-between border border-gray-200 shadow-xs hover:border-gray-400 transition-colors">
               <div className="space-y-3 max-w-sm">
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-gray-100 text-gray-800">
@@ -483,7 +483,7 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Promo 2: Studio Audio */}
+            {/* Audio promo */}
             <div className="relative overflow-hidden bg-white rounded-2xl p-8 text-gray-900 flex flex-col justify-between border border-gray-200 shadow-xs hover:border-gray-400 transition-colors">
               <div className="space-y-3 max-w-sm">
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-gray-100 text-gray-800">

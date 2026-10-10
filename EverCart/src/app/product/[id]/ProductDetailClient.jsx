@@ -65,7 +65,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
     }
 
     if (currentId) {
-      // Safe post-hydration preview lookup for instant zero-lag shell
+      // Restore cached preview product after hydration
       try {
         const preview = sessionStorage.getItem(`evercart_preview_${currentId}`)
         if (preview) {
@@ -80,7 +80,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
       fetchProduct()
     }
 
-    // Prefetch high-intent routes for instant 0ms transition
+    // Prefetch cart and checkout routes
     router.prefetch('/cart')
     router.prefetch('/checkout')
   }, [initialProduct, currentId, fetchProduct, router])
@@ -101,7 +101,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
     }
   }, [selectedImage, product])
 
-  // Bulletproof body scroll lock when lightbox is open
+  // Prevent body scrolling when lightbox is active
   useEffect(() => {
     if (isLightboxOpen) {
       const scrollY = window.scrollY
@@ -283,12 +283,12 @@ export default function ProductDetailClient({ initialProduct, productId }) {
           <span className="text-gray-900 font-medium truncate max-w-[280px] sm:max-w-md">{product.name}</span>
         </nav>
 
-        {/* Main Product Layout: 45% Gallery (Amazon-style left thumbnails & directly rounded image) + 55% Details Column */}
+        {/* Product details and gallery layout */}
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 xl:gap-12 items-start justify-between">
-          {/* Left: Gallery Column (45% Width on Desktop) */}
+          {/* Gallery column */}
           <div className="w-full lg:w-[45%] shrink-0 lg:sticky lg:top-24">
             <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 items-start">
-              {/* Amazon-style Left Thumbnails Strip */}
+              {/* Thumbnail strip */}
               {images.length > 1 && (
                 <div className="flex sm:flex-col gap-2.5 overflow-x-auto sm:overflow-y-auto sm:max-h-[68vh] no-scrollbar shrink-0 w-full sm:w-[68px] lg:w-[72px] py-0.5">
                   {images.map((image, index) => {
@@ -328,7 +328,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
                 </div>
               )}
 
-              {/* Fixed Main Product Image Stage (65-70% viewport height, smooth hover scale, NO outer border/box) */}
+              {/* Main product image stage */}
               <div className="flex-1 w-full min-w-0">
                 <div
                   onClick={() => {
@@ -353,7 +353,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
                         onError={() => setImageError(true)}
                         unoptimized
                       />
-                      {/* Floating Zoom / Expand Icon Hint */}
+                      {/* Expand hint */}
                       <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-[11px] font-medium px-2.5 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
@@ -385,7 +385,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
             </div>
           </div>
 
-          {/* Right: Product Info & Purchase Column (55% Width on Desktop) */}
+          {/* Details and purchase column */}
           <div className="w-full lg:w-[55%] min-w-0 flex-1 space-y-4 sm:space-y-5">
             {/* Header info */}
             <div>
@@ -404,7 +404,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
                 {product.name}
               </h1>
 
-              {/* Rating & Stock Status (Private Stock - No numbers, No 100% Genuine badge) */}
+              {/* Rating and availability */}
               <div className="flex items-center gap-2.5 mt-2.5 flex-wrap">
                 {product.rating && (
                   <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 rounded-md shadow-2xs">
@@ -422,7 +422,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
               </div>
             </div>
 
-            {/* Price Section (Clean, Directly on Page - No Box) */}
+            {/* Price */}
             <div className="space-y-1">
               <div className="flex items-baseline gap-3 flex-wrap">
                 <span className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">
@@ -453,10 +453,10 @@ export default function ProductDetailClient({ initialProduct, productId }) {
               </div>
             )}
 
-            {/* Actions Bar: Add to Cart & Buy Now side-by-side (Count stepper removed for clean UI) */}
+            {/* Purchase actions */}
             {product.stock > 0 && (
               <div className="pt-1 grid grid-cols-2 gap-3">
-                {/* Primary CTA: Add to Cart / View in Cart */}
+                {/* Cart action */}
                 {isInCart && !justAdded ? (
                   <Link
                     href="/cart"
@@ -492,7 +492,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
                   </button>
                 )}
 
-                {/* Secondary CTA: Buy Now */}
+                {/* Buy now action */}
                 <button
                   type="button"
                   onClick={handleBuyNow}
@@ -520,9 +520,9 @@ export default function ProductDetailClient({ initialProduct, productId }) {
               </div>
             )}
 
-            {/* Interactive Clean Sections: Key Features & Technical Specifications */}
+            {/* Detail sections */}
             <div className="pt-2 divide-y divide-gray-100 border-t border-gray-100">
-              {/* 1. Key Features Section */}
+              {/* Key features */}
               {product.features && product.features.length > 0 && (
                 <div className="py-4">
                   <button
@@ -531,7 +531,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
                     className="w-full flex items-center justify-between text-left group cursor-pointer select-none"
                   >
                     <div className="flex items-center gap-2.5">
-                      {/* Direct Lucide Hash Icon (No box, no hover effect) */}
+                      {/* Features icon */}
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="18"
@@ -587,7 +587,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
 
                         return (
                           <div key={index} className="flex items-start gap-2.5 text-xs sm:text-sm">
-                            {/* Lucide Line Dot Left Horizontal Pointer */}
+                            {/* Bullet icon */}
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               width="18"
@@ -621,7 +621,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
                 </div>
               )}
 
-              {/* 2. Technical Specifications Section */}
+              {/* Technical specifications */}
               {product.specifications && Object.keys(product.specifications).length > 0 && (
                 <div className="py-4">
                   <button
@@ -630,7 +630,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
                     className="w-full flex items-center justify-between text-left group cursor-pointer select-none"
                   >
                     <div className="flex items-center gap-2.5">
-                      {/* Direct Lucide Drone Icon (No box, no hover effect) */}
+                      {/* Specifications icon */}
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="18"
@@ -696,7 +696,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
         </div>
       </div>
 
-      {/* Modern Interactive Lightbox Modal */}
+      {/* Lightbox modal */}
       {isLightboxOpen && images.length > 0 && (
         <div 
           className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md overflow-hidden select-none touch-none flex items-center justify-center transition-all duration-300 animate-in fade-in"
@@ -705,7 +705,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleMouseUp}
         >
-          {/* Top Bar: Counter & Close button (FIXED) */}
+          {/* Top controls */}
           <div className="fixed top-4 left-4 right-4 flex items-center justify-between z-[120] pointer-events-none">
             <div className="pointer-events-auto flex items-center gap-2 bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 text-white/90 text-sm font-medium shadow-lg">
               <span>{selectedImage + 1} / {images.length}</span>
@@ -732,7 +732,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
             </button>
           </div>
 
-          {/* Navigation Arrows: Left and Right (FIXED) */}
+          {/* Navigation arrows */}
           {images.length > 1 && (
             <>
               <button
@@ -769,7 +769,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
             </>
           )}
 
-          {/* Center Image Canvas with Pan and Zoom (Zero Scrollbars) */}
+          {/* Zoom canvas */}
           <div 
             className="w-full h-full flex items-center justify-center overflow-hidden"
             onClick={(e) => {
@@ -817,12 +817,12 @@ export default function ProductDetailClient({ initialProduct, productId }) {
             </div>
           </div>
 
-          {/* Floating Corner Zoom Controls (STRICTLY FIXED in bottom-right corner) */}
+          {/* Zoom controls */}
           <div 
             className="fixed bottom-6 right-6 z-[120] flex items-center gap-1.5 bg-black/60 text-white backdrop-blur-md px-3 py-2 rounded-2xl border border-white/20 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Zoom Out Button */}
+            {/* Zoom out */}
             <button
               type="button"
               onClick={() => {
@@ -841,7 +841,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
               </svg>
             </button>
 
-            {/* Zoom Level Indicator / Reset Button */}
+            {/* Reset zoom */}
             <button
               type="button"
               onClick={() => {
@@ -854,7 +854,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
               {Math.round(zoomLevel * 100)}%
             </button>
 
-            {/* Zoom In Button */}
+            {/* Zoom in */}
             <button
               type="button"
               onClick={() => {
@@ -870,7 +870,7 @@ export default function ProductDetailClient({ initialProduct, productId }) {
             </button>
           </div>
 
-          {/* Bottom Thumbnails Strip (STRICTLY FIXED in bottom-center) */}
+          {/* Lightbox thumbnails */}
           {images.length > 1 && (
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[120] flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-2 rounded-2xl border border-white/20 max-w-[80vw] overflow-x-auto shadow-xl">
               {images.map((image, index) => (

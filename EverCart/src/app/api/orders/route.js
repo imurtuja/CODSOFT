@@ -4,7 +4,7 @@ import Order from '../../../models/Order.js'
 import Product from '../../../models/Product.js'
 import { getAuthUser } from '../../../lib/auth.js'
 
-// High-speed in-memory cache for customer orders
+// In-memory cache for customer orders
 const ordersCache = new Map()
 const ORDERS_CACHE_TTL_MS = 15000
 
@@ -21,7 +21,7 @@ export async function GET(request) {
 
     const authUser = getAuthUser(request)
 
-    // Check fast in-memory cache for non-admin listing
+    // Check cache for non-admin requests
     const cacheKey = !orderIdParam && !isAdminRequested ? (authUser?.userId || userId || '') : null
     if (cacheKey) {
       const cached = ordersCache.get(cacheKey)
@@ -37,7 +37,7 @@ export async function GET(request) {
 
     await connectDB()
 
-    // Specific order inquiry
+    // Fetch single order by orderId
     if (orderIdParam) {
       const sanitizedOrderId = String(orderIdParam).trim()
       const singleOrder = await Order.findOne({ orderId: sanitizedOrderId }).lean()
@@ -45,7 +45,7 @@ export async function GET(request) {
         return NextResponse.json({ error: 'Order not found' }, { status: 404 })
       }
 
-      // Security: Only the authenticated owner or admin can access
+      // Access control: verify requester owns this order or is admin
       if (!authUser) {
         return NextResponse.json({ error: 'Order not found' }, { status: 404 })
       }
@@ -67,7 +67,7 @@ export async function GET(request) {
       return NextResponse.json(singleOrder)
     }
 
-    // Admin listing requires authenticated admin role
+    // Admin listing requires admin role
     if (isAdminRequested) {
       if (!authUser || authUser.role !== 'admin') {
         return NextResponse.json(
@@ -81,7 +81,7 @@ export async function GET(request) {
       return NextResponse.json(allOrders)
     }
 
-    // Customer order listing
+    // Customer orders query
     const effectiveUserId = (userId ? String(userId).trim() : null) || authUser?.userId
     if (!effectiveUserId && !authUser) {
       return NextResponse.json(
@@ -90,7 +90,7 @@ export async function GET(request) {
       )
     }
 
-    // Security: If authenticated as regular customer, ensure they are requesting their own orders
+    // Non-admins can only request their own orders
     if (authUser && authUser.role !== 'admin' && userId) {
       const isOwner = String(userId).trim() === String(authUser.userId) ||
                       (authUser.email && String(userId).trim().toLowerCase() === authUser.email.toLowerCase())
@@ -102,7 +102,7 @@ export async function GET(request) {
       }
     }
 
-    // Build flexible query matching user, userId or email to ensure all legitimate orders are retrieved
+    // Match against user ID and email fields
     const queryConditions = []
     if (effectiveUserId) {
       queryConditions.push({ user: String(effectiveUserId) })
@@ -171,7 +171,7 @@ export async function POST(request) {
       )
     }
 
-    // Validate and price check items from database
+    // Validate items and recalculate prices from DB
     let serverSubtotal = 0
     const verifiedItems = []
 
@@ -184,14 +184,14 @@ export async function POST(request) {
         try {
           dbProduct = await Product.findById(productId).lean()
         } catch (e) {
-          // If not valid ObjectId, find by sku or id
+          // Fallback lookup by SKU or product name
           dbProduct = await Product.findOne({
             $or: [{ sku: String(productId) }, { name: String(item.name || '') }]
           }).lean()
         }
       }
 
-      // Use authoritative database price if product found; otherwise fallback safely
+      // Prefer database price over client-provided value
       const authoritativePrice = dbProduct && typeof dbProduct.price === 'number'
         ? dbProduct.price
         : Math.max(0, Number(item.price) || 0)
@@ -208,7 +208,7 @@ export async function POST(request) {
         image: (dbProduct?.images && dbProduct.images[0]) || item.image || '/placeholder.png'
       })
 
-      // Update inventory stock safely if product exists in database
+      // Deduct stock and increment sales count
       if (dbProduct) {
         await Product.findByIdAndUpdate(dbProduct._id, {
           $inc: {
@@ -222,7 +222,7 @@ export async function POST(request) {
     const authoritativeTotal = Math.max(0, Math.round(serverSubtotal))
     const paymentMethod = orderData.paymentMethod === 'cod' ? 'cod' : 'razorpay'
     
-    // Generate unique cryptographically unforgeable order reference and official invoice number
+    // Generate order ID and invoice number
     const orderId = 'EVR-' + Date.now()
     const now = new Date()
     const currentYear = now.getFullYear()
@@ -230,7 +230,7 @@ export async function POST(request) {
     const refSuffix = orderId.slice(-6).toUpperCase()
     const invoiceNumber = `INV/EC/${fiscalYear}/${refSuffix}`
 
-    // Indian GST 18% inclusive in price:
+    // Inclusive GST (18%) breakdown
     const taxableAmount = Math.round((authoritativeTotal / 1.18) * 100) / 100
     const totalGst = Math.round((authoritativeTotal - taxableAmount) * 100) / 100
     const cgst = Math.round((totalGst / 2) * 100) / 100

@@ -83,7 +83,7 @@ export default async function RootLayout({ children }) {
   const isAdminHost = host.startsWith('admin.') || host.includes('admin.evercart')
   const isTargetingAdmin = isAdminHeader || isAdminHost
 
-  // Verify server-side whether visitor is an actual authenticated admin
+  // Verify admin session server-side
   let isVerifiedAdmin = false
   if (isTargetingAdmin) {
     try {
@@ -103,7 +103,7 @@ export default async function RootLayout({ children }) {
     }
   }
 
-  // Never show customer storefront navbar/footer on admin domain or for verified admin
+  // Hide storefront navigation on admin domain
   const showStorefrontChrome = !isTargetingAdmin && !isVerifiedAdmin
 
   return (
@@ -112,7 +112,7 @@ export default async function RootLayout({ children }) {
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              // Suppress development console errors and warnings
+              // Filter third-party SDK and dev warnings in console
               (function() {
                 const originalError = console.error;
                 const originalWarn = console.warn;
@@ -184,7 +184,7 @@ export default async function RootLayout({ children }) {
                   originalWarn.apply(console, args);
                 };
                 
-                // Global error handler
+                // Filter unhandled third-party runtime exceptions
                 window.addEventListener('error', function(event) {
                   if (
                     event.message?.includes('otp-credentials') ||

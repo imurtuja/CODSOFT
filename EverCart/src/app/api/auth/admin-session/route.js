@@ -18,11 +18,11 @@ function setAdminCookies(response, token, request) {
     maxAge: 7 * 24 * 60 * 60,
   }
 
-  // 1. Direct host-only cookies (guaranteed acceptance on current origin, including Brave Shields)
+  // Host-only cookies
   response.cookies.set('token', token, { ...cookieBase, httpOnly: false })
   response.cookies.set('admin_token', token, { ...cookieBase, httpOnly: true })
 
-  // 2. Cross-subdomain cookies (shared between evercart.murtuja.in and admin.evercart.murtuja.in)
+  // Cross-subdomain cookies
   if (cookieDomain) {
     response.cookies.set('token_shared', token, { ...cookieBase, domain: cookieDomain, httpOnly: false })
     response.cookies.set('admin_token_shared', token, { ...cookieBase, domain: cookieDomain, httpOnly: true })
@@ -36,7 +36,7 @@ export async function GET(request) {
 
     await connectDB()
 
-    // 1. Handle secure single-use 30s transfer ticket
+    // Exchange short-lived transfer ticket
     if (claimTicket) {
       try {
         const decoded = jwt.verify(claimTicket, JWT_SECRET)
@@ -90,11 +90,11 @@ export async function GET(request) {
         console.warn('Invalid or expired admin transfer ticket:', err.message)
       }
 
-      // If invalid ticket, redirect to root
+      // Fall back to root if ticket verification fails
       return NextResponse.redirect(new URL('/', request.url))
     }
 
-    // 2. Standard Session verification
+    // Validate existing session
     const authUser = getAuthUser(request)
     if (!authUser || authUser.role !== 'admin') {
       return NextResponse.json({ authenticated: false }, { status: 401 })
@@ -105,7 +105,7 @@ export async function GET(request) {
       return NextResponse.json({ authenticated: false }, { status: 403 })
     }
 
-    // Generate renewed token so client can store it in localStorage
+    // Issue refreshed token for client storage
     const token = jwt.sign(
       {
         userId: user._id,
@@ -134,7 +134,7 @@ export async function POST(request) {
   try {
     await connectDB()
 
-    // 1. Check if authenticated via Bearer token in header (session sync from storefront)
+    // Handle authenticated session transfer from storefront
     const authHeader = request.headers.get('authorization')
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const incomingToken = authHeader.substring(7).trim()
@@ -143,7 +143,7 @@ export async function POST(request) {
         if (decoded && decoded.role === 'admin') {
           const user = await User.findById(decoded.userId).select('-password').lean()
           if (user && user.role === 'admin') {
-            // Generate single-use 30-second transfer ticket
+            // Issue short-lived transfer ticket (30s)
             const ticket = jwt.sign(
               {
                 userId: user._id,
@@ -168,7 +168,7 @@ export async function POST(request) {
       } catch (err) {}
     }
 
-    // 2. Fallback: Direct email/password credentials
+    // Credential authentication fallback
     const body = await request.json().catch(() => ({}))
     const { email, password } = body
 

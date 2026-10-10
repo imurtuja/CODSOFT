@@ -7,7 +7,7 @@ import { toast } from '../../components/Toast'
 import ConfirmLoader from '../../components/ConfirmLoader'
 import NotFoundView from '../../components/NotFoundView'
 
-// Helper for Indian Rupees number to words (for Tax Invoice)
+// Number to words helper for invoice total
 function numberToIndianWords(num) {
   const n = Math.floor(Number(num) || 0)
   if (n === 0) return 'Zero Rupees Only'
@@ -53,12 +53,11 @@ export default function OrderSuccessContent({ initialOrderId = '', isFreshChecko
   const [orderData, setOrderData] = useState(null)
   const [copied, setCopied] = useState(false)
 
-  // Determine synchronously if this is a fresh order transition from checkout:
-  // Must be authenticated to qualify as fresh!
+  // Check whether this visit immediately follows checkout
   const [isFresh] = useState(() => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token')
-      if (!token) return false // Unauthenticated visitors are NEVER treated as fresh checkout
+      if (!token) return false
 
       if (isFreshCheckout) return true
       const urlParams = new URLSearchParams(window.location.search)
@@ -69,9 +68,7 @@ export default function OrderSuccessContent({ initialOrderId = '', isFreshChecko
     return false
   })
 
-  // Initial fetch status:
-  // - If fresh checkout by authenticated user: start directly as 'loading' (ConfirmLoader displays immediately with ZERO blank screen!)
-  // - Otherwise: start as 'idle' (so unauthenticated visitors or direct link visitors NEVER flash ConfirmLoader)
+  // Display confirmation loader for new checkouts; load directly for return visits
   const [fetchStatus, setFetchStatus] = useState(() => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token')
@@ -100,14 +97,14 @@ export default function OrderSuccessContent({ initialOrderId = '', isFreshChecko
 
     setOrderId(id)
 
-    // Security check 1: Non-logged in / unauthenticated user gets 404 immediately with ZERO loader flash
+    // Require authentication to view confirmation
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     if (!token) {
       setFetchStatus('not_found')
       return
     }
 
-    // Professional URL normalization: clean URL in browser history and consume fresh session flag
+    // Clean query parameters once state is hydrated
     if (typeof window !== 'undefined') {
       if (window.location.search.includes('orderId') || window.location.search.includes('fresh')) {
         window.history.replaceState(null, '', `/order-success/${encodeURIComponent(id)}`)
@@ -125,13 +122,12 @@ export default function OrderSuccessContent({ initialOrderId = '', isFreshChecko
     })
       .then(async (res) => {
         if (!res.ok) {
-          // Unauthorized, forbidden, or non-existent order: return 404
           setFetchStatus('not_found')
           return
         }
         const data = await res.json()
 
-        // Server-sided 30-minute confirmation link expiry:
+        // Confirmation links redirect to standard order view after 30 minutes
         if (data.isConfirmationExpired) {
           window.location.replace(`/order/${encodeURIComponent(data.orderId || id)}`)
           return
@@ -140,20 +136,15 @@ export default function OrderSuccessContent({ initialOrderId = '', isFreshChecko
         setOrderData(data)
 
         if (isFresh) {
-          // NORMAL CHECKOUT PROCESS:
-          // User arrived from checkout -> ConfirmLoader started immediately (zero blank screen).
-          // Allow the cipher animation to run for ~1.4s, then smoothly transition to confirmation dashboard.
           setFetchStatus('loading')
           confirmTimer = setTimeout(() => {
             setFetchStatus('success')
           }, 1400)
         } else {
-          // RELOAD OR DIRECT LINK PASTE WITHIN 30 MINUTES:
-          // "when reload or direct link paste no need to show the confirming thing and show the page directly to auth user"
           setFetchStatus('success')
         }
 
-        // Live timer for remaining time until 30-min confirmation window expires:
+        // Redirect when 30-minute confirmation window expires
         const orderTimestamp = new Date(data.orderDate || data.createdAt || Date.now()).getTime()
         const ageMs = Date.now() - orderTimestamp
         const remainingMs = Math.max(0, 30 * 60 * 1000 - ageMs)
@@ -223,7 +214,7 @@ export default function OrderSuccessContent({ initialOrderId = '', isFreshChecko
     }
   }
 
-  // Order Details
+  // Order details
   const isCod = orderData?.paymentMethod === 'cod' || orderData?.payment?.method === 'cod'
   const isPaid = orderData?.paymentStatus === 'completed' || orderData?.paymentStatus === 'paid' || orderData?.payment?.status === 'completed'
   const totalAmount = orderData?.totalAmount || orderData?.total || 0
@@ -236,9 +227,7 @@ export default function OrderSuccessContent({ initialOrderId = '', isFreshChecko
   const formattedOrderDate = formatDate(orderData?.orderDate || orderData?.createdAt)
   const paymentTransactionId = orderData?.payment?.transactionId || orderData?.payment?.razorpayPaymentId || orderData?.paymentId || ''
 
-  // Indian GST 18% inclusive inside price:
-  // Taxable Value = total / 1.18
-  // Total GST = total - Taxable Value
+  // Inclusive GST (18%) breakdown
   const taxDetails = orderData?.taxDetails || {
     taxableAmount: Math.round((totalAmount / 1.18) * 100) / 100,
     totalGst: Math.round((totalAmount - (totalAmount / 1.18)) * 100) / 100,
@@ -252,44 +241,37 @@ export default function OrderSuccessContent({ initialOrderId = '', isFreshChecko
   const cgst = taxDetails.cgst || Math.round((totalGst / 2) * 100) / 100
   const sgst = taxDetails.sgst || Math.round((totalGst - cgst) * 100) / 100
 
-  // Zero-flash privacy screen: neutral pure white background while initial verification takes place
+  // Empty state during initial verification
   if (fetchStatus === 'idle') {
     return <div className="min-h-[calc(100vh-64px)] bg-white" />
   }
 
-  // If order is not found, unauthorized, or does not belong to user: render 404 page directly
+  // Not found or unauthorized view
   if (fetchStatus === 'not_found') {
     return <NotFoundView />
   }
 
   return (
     <>
-      {/* 
-        ============================================================
-        1. SCREEN VIEW: PURE WHITE BACKGROUND & CLEAN RECEIPT BILL
-        Matches website look (bg-white, clean borders, black accents)
-        Zero border lines on cutouts and spikes
-        Hidden on print
-        ============================================================
-      */}
+      {/* Customer receipt view */}
       <div className="print:hidden min-h-[calc(100vh-64px)] bg-white py-8 sm:py-12 px-4 sm:px-6 flex items-center justify-center">
         <div className="max-w-5xl w-full">
 
-          {/* STATE 2: CONFIRMING ORDER STATE */}
+          {/* Confirming order state */}
           {fetchStatus === 'loading' && (
             <div className="bg-white rounded-3xl border border-gray-200/90 shadow-sm p-8 sm:p-12 text-center max-w-md mx-auto">
               <ConfirmLoader subtext="Verifying payment & securing order..." />
             </div>
           )}
 
-          {/* STATE 3: CREATIVE 2-COLUMN ORDER CONFIRMATION DASHBOARD */}
+          {/* Order confirmation view */}
           {fetchStatus === 'success' && orderData && (
             <div className="bg-white rounded-3xl border border-gray-200/90 shadow-sm p-6 sm:p-10 lg:p-12 relative">
               
-              {/* Main 2-Column Creative Layout */}
+              {/* Two-column layout */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
                 
-                {/* ================= LEFT COLUMN: Thank You & Delivery Address ================= */}
+                {/* Left column: order acknowledgement and delivery address */}
                 <div className="lg:col-span-6 space-y-6">
                   {/* Title & Subtitle */}
                   <div className="space-y-2.5">
@@ -328,7 +310,7 @@ export default function OrderSuccessContent({ initialOrderId = '', isFreshChecko
                           {shippingAddress.address || 'Address on file'}
                           {shippingAddress.city ? `, ${shippingAddress.city}` : ''}
                           {shippingAddress.state ? `, ${shippingAddress.state}` : ''}
-                          {shippingAddress.zipCode ? ` — ${shippingAddress.zipCode}` : ''}
+                          {shippingAddress.zipCode ? ` - ${shippingAddress.zipCode}` : ''}
                         </p>
                       </div>
 
@@ -366,14 +348,14 @@ export default function OrderSuccessContent({ initialOrderId = '', isFreshChecko
                   </div>
                 </div>
 
-                {/* ================= RIGHT COLUMN: Exact Bill Receipt Ticket Design ================= */}
+                {/* Right column: receipt view */}
                 <div className="lg:col-span-6 lg:pt-6">
-                  {/* Ticket wrapper with drop-shadow so the paper slip and spikes have realistic depth */}
+                  {/* Ticket card container */}
                   <div className="relative filter drop-shadow-xs">
-                    {/* Main Ticket Paper Body */}
+                    {/* Ticket body */}
                     <div className="relative bg-[#f4f5f7] rounded-t-2xl">
                       
-                      {/* Top Header: Order Summary + Print Invoice Button */}
+                      {/* Receipt header */}
                       <div className="flex items-center justify-between px-6 pt-5 pb-3">
                         <h2 className="text-base sm:text-lg font-black text-gray-900 tracking-tight">
                           Order Summary
@@ -445,17 +427,17 @@ export default function OrderSuccessContent({ initialOrderId = '', isFreshChecko
                         </div>
                       </div>
 
-                      {/* Ticket Notches at the Dashed Fold Line (Pure White, Borderless for Seamless Cutout) */}
+                      {/* Ticket notches and fold line */}
                       <div className="relative my-4">
-                        {/* Left Semicircle Cutout */}
+                        {/* Left cutout */}
                         <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white pointer-events-none" />
-                        {/* Right Semicircle Cutout */}
+                        {/* Right cutout */}
                         <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white pointer-events-none" />
-                        {/* Dashed Perforated Fold Line */}
+                        {/* Perforated divider */}
                         <div className="border-b border-dashed border-gray-300 mx-5" />
                       </div>
 
-                      {/* Purchased Items List */}
+                      {/* Purchased items */}
                       <div className="px-6 space-y-3 max-h-72 overflow-y-auto pr-3">
                         {items.map((item, index) => {
                           const productId = item.product?._id || item.product?.id || (typeof item.product === 'string' ? item.product : '')
@@ -511,14 +493,14 @@ export default function OrderSuccessContent({ initialOrderId = '', isFreshChecko
                       {/* Solid Separator */}
                       <div className="border-b border-gray-200 mx-6 my-4" />
 
-                      {/* Price Breakdown with Indian GST Laws */}
+                      {/* Price breakdown */}
                       <div className="px-6 space-y-1.5 text-xs text-gray-600">
                         <div className="flex justify-between">
                           <span>Sub Total (Taxable Value)</span>
                           <span className="font-medium text-gray-900">{formatPrice(taxableAmount)}</span>
                         </div>
 
-                        {/* GST Split (Inside Price, as per Indian Law) */}
+                        {/* GST breakdown */}
                         <div className="flex justify-between text-gray-500 text-[11px]">
                           <span>CGST (9%) + SGST (9%)</span>
                           <span className="font-medium text-gray-700">₹{cgst.toLocaleString('en-IN')} + ₹{sgst.toLocaleString('en-IN')}</span>
@@ -557,7 +539,7 @@ export default function OrderSuccessContent({ initialOrderId = '', isFreshChecko
 
                     </div>
 
-                    {/* Sawtooth Serrated Spikes Bottom Edge - rendered cleanly on white card */}
+                    {/* Serrated receipt edge */}
                     <div className="w-full overflow-hidden leading-none select-none -mt-px">
                       <svg
                         className="w-full h-3.5 text-[#f4f5f7] fill-current block"
@@ -577,13 +559,7 @@ export default function OrderSuccessContent({ initialOrderId = '', isFreshChecko
         </div>
       </div>
 
-      {/* 
-        ============================================================
-        2. PRINT VIEW: DEDICATED OFFICIAL 1-PAGE TAX INVOICE
-        Strictly fits on 1 single sheet of A4 paper (no 2nd blank page)
-        E-Commerce retail platform corporate details
-        ============================================================
-      */}
+      {/* Printable tax invoice (A4 format) */}
       <div className="hidden print:block bg-white text-black text-[10px] leading-tight p-0 m-0">
         <style dangerouslySetInnerHTML={{ __html: `
           @media print {
@@ -625,7 +601,7 @@ export default function OrderSuccessContent({ initialOrderId = '', isFreshChecko
             </div>
           </div>
 
-          {/* Customer & Fulfillment Info Box */}
+          {/* Customer and order info */}
           <div className="grid grid-cols-2 gap-3 border border-gray-300 rounded p-2 bg-gray-50/30 text-[9.5px]">
             <div>
               <h4 className="font-bold uppercase tracking-wider text-[9px] text-gray-500 mb-0.5">
@@ -667,7 +643,7 @@ export default function OrderSuccessContent({ initialOrderId = '', isFreshChecko
             </div>
           </div>
 
-          {/* Indian GST Compliant Itemized Table */}
+          {/* Tax invoice table */}
           <table className="w-full border-collapse border border-gray-400 text-[9px]">
             <thead>
               <tr className="bg-gray-100 border-b border-gray-400 text-left">

@@ -25,7 +25,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col lg:flex-row lg:justify-between items-start gap-10 lg:gap-16">
           
-          {/* Shop and Support Links (Order 1 on mobile, Order 2 on desktop) */}
+          {/* Shop and support links */}
           <div className="order-1 lg:order-2 w-full lg:w-auto">
             <div className="grid grid-cols-2 gap-8 sm:gap-16 lg:gap-24">
               {/* Shop */}
@@ -52,7 +52,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Company Info / Website Branding (Order 2 on mobile, Order 1 on desktop) */}
+          {/* Brand information */}
           <div className="order-2 lg:order-1 max-w-md w-full">
             <Link href="/" prefetch={false} className="inline-flex items-center space-x-2 mb-4 group">
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
@@ -103,7 +103,7 @@ export default function Footer() {
 
         </div>
 
-        {/* Copyright & Legal Links */}
+        {/* Legal links and copyright */}
         <div className="border-t border-gray-800 mt-10 pt-8">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-gray-400 text-sm">

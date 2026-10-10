@@ -81,7 +81,7 @@ export default function CheckoutPage() {
       setSavedCartCount(savedCount)
 
       if (typeof window !== 'undefined') {
-        // Strip any query parameter immediately so the checkout URL is always 100% clean: /checkout
+        // Clear query parameters
         if (window.location.search) {
           window.history.replaceState(null, '', '/checkout')
         }
@@ -135,7 +135,7 @@ export default function CheckoutPage() {
   }, [])
 
   useEffect(() => {
-    // Suppress external third-party SDK and ad-blocker noise (Razorpay / Sentry / Sardine / Lumberjack / Stripe)
+    // Suppress third-party payment SDK log noise
     const isIgnored = (str) => {
       if (!str) return false
       const s = String(str).toLowerCase()
@@ -355,7 +355,7 @@ export default function CheckoutPage() {
         headers.Authorization = `Bearer ${token}`
       }
 
-      // 1. Create order in Database
+      // Create order record
       const orderResponse = await fetch('/api/orders', {
         method: 'POST',
         headers,
@@ -371,7 +371,7 @@ export default function CheckoutPage() {
       const dbOrderId = orderResult.order?._id
       const displayOrderId = orderResult.order?.orderId || orderResult.orderId || 'EVR-' + Date.now()
 
-      // 2. Handle Cash on Delivery: Show confirmation state, clear direct item / cart, then redirect
+      // Cash on Delivery
       if (paymentMethod === 'cod') {
         setPaymentStatus('success')
         if (isDirectMode) {
@@ -389,7 +389,7 @@ export default function CheckoutPage() {
         return
       }
 
-      // 3. Online Payment: Request live Razorpay order from API
+      // Online payment via Razorpay
       const paymentResponse = await fetch('/api/payment/create-order', {
         method: 'POST',
         headers,
@@ -406,7 +406,7 @@ export default function CheckoutPage() {
         throw new Error(paymentData.error || paymentData.details || 'Failed to initiate payment')
       }
 
-      // 4. Ensure Razorpay SDK is loaded
+      // Ensure Razorpay SDK is loaded
       const isLoaded = await loadRazorpayScript()
       if (!isLoaded || typeof window.Razorpay === 'undefined') {
         throw new Error('Failed to load secure Razorpay payment gateway script. Please check your network.')
@@ -476,7 +476,7 @@ export default function CheckoutPage() {
           }
         })
 
-        // Dismiss internal overlay right as the Razorpay modal opens
+        // Close loading overlay when gateway modal opens
         setPaymentStatus(null)
         setLoading(false)
         razorpayInstance.open()
@@ -498,7 +498,7 @@ export default function CheckoutPage() {
     return <CheckoutSkeleton />
   }
 
-  // Auth gate
+  // Require authentication
   if (!isLoggedIn) {
     return (
       <div className="min-h-[85vh] bg-gray-50/50 flex items-center justify-center p-4">
@@ -551,7 +551,7 @@ export default function CheckoutPage() {
     )
   }
 
-  // Empty cart gate
+  // Require items in cart
   if (cartItems.length === 0) {
     return (
       <div className="min-h-[85vh] bg-gray-50/50 flex items-center justify-center p-4">

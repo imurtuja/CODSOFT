@@ -6,7 +6,7 @@ function escapeRegex(text) {
   return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
 }
 
-// High-speed in-memory cache for sub-millisecond query responses
+// In-memory cache for product catalog queries
 const productsCache = new Map()
 const CACHE_TTL_MS = 30000 // 30 seconds
 
@@ -57,7 +57,7 @@ export async function GET(request) {
     const featured = searchParams.get('featured') === 'true'
     const spotlight = searchParams.get('spotlight') === 'true'
     
-    // Validate and clamp pagination to prevent DoS
+    // Clamp pagination limits
     const rawLimit = parseInt(searchParams.get('limit') || (isAdmin ? '1000' : '20'), 10)
     const limit = isAdmin
       ? Math.min(Math.max(isNaN(rawLimit) ? 1000 : rawLimit, 1), 2000)
@@ -71,23 +71,23 @@ export async function GET(request) {
     
     let query = isAdmin ? {} : { status: 'active' }
     
-    // Filter by featured products
+    // Featured filter
     if (featured) {
       query.isFeatured = true
     }
     
-    // Filter by spotlight products
+    // Spotlight filter
     if (spotlight) {
       query.isSpotlight = true
     }
     
-    // Safe category filter (prevent ReDoS)
+    // Category filter
     if (category && category.trim()) {
       const safeCat = escapeRegex(category.trim())
       query.category = { $regex: new RegExp(`^${safeCat}$`, 'i') }
     }
     
-    // Safe search filter
+    // Text search
     if (search && search.trim()) {
       const safeSearch = escapeRegex(search.trim())
       const searchRegex = new RegExp(safeSearch, 'i')
@@ -100,7 +100,7 @@ export async function GET(request) {
       ]
     }
     
-    // Filter by price range
+    // Price range filter
     const parsedMin = parseInt(minPrice, 10)
     const parsedMax = parseInt(maxPrice, 10)
     if (!isNaN(parsedMin) || !isNaN(parsedMax)) {
@@ -109,7 +109,7 @@ export async function GET(request) {
       if (!isNaN(parsedMax) && parsedMax >= 0) query.price.$lte = parsedMax
     }
     
-    // Build sort object
+    // Sort criteria
     let sortObj = { createdAt: -1 }
     if (sort === 'name') {
       sortObj = { name: 1 }
@@ -121,7 +121,7 @@ export async function GET(request) {
       sortObj = { rating: -1 }
     }
     
-    // Run count and data query (optimized: skip expensive countDocuments when fetching single spotlight)
+    // Execute query (skip countDocuments when fetching a single spotlight)
     let total = 0
     let products = []
     if (spotlight && limit === 1) {

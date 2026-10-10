@@ -1,4 +1,4 @@
-// High-performance client-side in-memory cache with concurrent request deduplication
+// In-memory client cache and request deduplication
 const clientCache = new Map()
 const pendingRequests = new Map()
 const DEFAULT_TTL_MS = 60000 // 60 seconds cache
@@ -11,7 +11,7 @@ export async function fetchCached(url, options = {}, ttl = DEFAULT_TTL_MS) {
     return cached.data
   }
 
-  // Deduplicate concurrent in-flight requests for the exact same URL
+  // Deduplicate in-flight requests for the same URL
   if (pendingRequests.has(url)) {
     return pendingRequests.get(url)
   }

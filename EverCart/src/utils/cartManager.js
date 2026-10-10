@@ -1,6 +1,4 @@
-/**
- * Centralized cart manager for local storage and online MongoDB syncing
- */
+// Cart state management and server synchronization
 
 function getLoggedInUser() {
   if (typeof window === 'undefined') return null

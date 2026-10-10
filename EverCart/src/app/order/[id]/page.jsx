@@ -112,7 +112,7 @@ export default function OrderDetailsPage() {
   const shippingAddress = order.shippingAddress || order.shipping || {}
   const items = Array.isArray(order.items) ? order.items : []
 
-  // Progress Steps calculation
+  // Calculate order progress steps
   let currentLevel = 2 // Default: confirmed for placed orders
   if (orderStatus === 'delivered') {
     currentLevel = 4
@@ -186,9 +186,9 @@ export default function OrderDetailsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50/50 py-6 sm:py-8">
-      {/* Aligned 1:1 with Navbar Logo via max-w-7xl */}
+      {/* Content container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Breadcrumb Navigation */}
+        {/* Breadcrumb */}
         <nav className="flex items-center space-x-2 text-xs text-gray-500 mb-4">
           <Link href="/" className="hover:text-black transition-colors">Home</Link>
           <span className="text-gray-300">/</span>
@@ -197,7 +197,7 @@ export default function OrderDetailsPage() {
           <span className="text-gray-900 font-medium">Order Details</span>
         </nav>
 
-        {/* Header Banner */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-gray-200/80 mb-6">
           <div className="flex items-center flex-wrap gap-2.5">
             <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-2">
@@ -238,11 +238,11 @@ export default function OrderDetailsPage() {
           </div>
         </div>
 
-        {/* 2-Column Responsive Layout */}
+        {/* Content layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Tracking, Items, Shipping Address */}
+          {/* Order details column */}
           <div className="lg:col-span-8 space-y-4">
-            {/* 1. Order Progress Tracker Card with Connected Bar */}
+            {/* Shipment progress tracker */}
             <div className="bg-white rounded-2xl border border-gray-200/90 shadow-2xs p-5 sm:p-6">
               <div className="flex items-center justify-between pb-3.5 border-b border-gray-100 mb-6">
                 <div className="flex items-center gap-2">
@@ -260,7 +260,7 @@ export default function OrderDetailsPage() {
                 </span>
               </div>
 
-              {/* Connected Stepper - Single Column System for Perfect Center Alignment */}
+              {/* Stepper progress bar */}
               <div className="relative">
                 <div className="grid grid-cols-4 gap-2 sm:gap-3 relative">
                   {trackingSteps.map((step, idx) => {
@@ -270,12 +270,12 @@ export default function OrderDetailsPage() {
 
                     return (
                       <div key={step.level} className="relative flex flex-col items-center">
-                        {/* Connecting Line to next step */}
+                        {/* Step connector */}
                         {idx < trackingSteps.length - 1 && (
                           <div className="absolute top-[16px] sm:top-[18px] left-1/2 w-full h-1 -translate-y-1/2 z-0">
-                            {/* Background Gray Line */}
+                            {/* Track line */}
                             <div className="w-full h-full bg-gray-200 overflow-hidden">
-                              {/* Filled Active Line */}
+                              {/* Completed line */}
                               <div
                                 className={`h-full transition-all duration-500 ${
                                   isNextDone ? 'w-full bg-emerald-500' : 'w-0 bg-transparent'
@@ -285,7 +285,7 @@ export default function OrderDetailsPage() {
                           </div>
                         )}
 
-                        {/* Node Circle - Centered in column */}
+                        {/* Step indicator */}
                         <div
                           className={`relative z-10 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-xs font-black transition-all shadow-2xs ${
                             isDone
@@ -304,7 +304,7 @@ export default function OrderDetailsPage() {
                           )}
                         </div>
 
-                        {/* Step Card Box - Centered directly beneath the circle */}
+                        {/* Step label */}
                         <div
                           className={`w-full mt-3 p-2.5 sm:p-3 rounded-xl border text-center transition-all ${
                             isDone
@@ -328,7 +328,7 @@ export default function OrderDetailsPage() {
               </div>
             </div>
 
-            {/* 2. Order Items List Card */}
+            {/* Ordered items */}
             <div className="bg-white rounded-2xl border border-gray-200/90 shadow-2xs overflow-hidden">
               <div className="px-4 sm:px-5 py-3.5 bg-gray-50/70 border-b border-gray-100 flex items-center justify-between text-xs">
                 <h3 className="font-extrabold text-gray-900">
@@ -407,7 +407,7 @@ export default function OrderDetailsPage() {
               </div>
             </div>
 
-            {/* 3. Shipping & Delivery Address Card */}
+            {/* Shipping address */}
             <div className="bg-white rounded-2xl border border-gray-200/90 shadow-2xs p-4 sm:p-5">
               <h3 className="font-extrabold text-xs sm:text-sm text-gray-900 pb-3 border-b border-gray-100 mb-3 flex items-center gap-2">
                 <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -456,9 +456,9 @@ export default function OrderDetailsPage() {
             </div>
           </div>
 
-          {/* Right Column: Sticky Summary & Payment Receipt */}
+          {/* Summary column */}
           <div className="lg:col-span-4 sticky top-24 space-y-4">
-            {/* Order Summary Receipt Card */}
+            {/* Order summary */}
             <div className="bg-white rounded-2xl border border-gray-200/90 shadow-2xs p-5">
               <h3 className="font-extrabold text-sm text-gray-900 pb-3 border-b border-gray-100">
                 Order Summary

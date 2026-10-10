@@ -18,7 +18,7 @@ function getUserId(request) {
   return url.searchParams.get('userId')
 }
 
-// GET: Fetch user's online cart
+// Fetch user's online cart
 export async function GET(request) {
   try {
     await connectDB()
@@ -42,7 +42,7 @@ export async function GET(request) {
   }
 }
 
-// POST: Save/replace cart online
+// Update online cart
 export async function POST(request) {
   try {
     await connectDB()
@@ -79,7 +79,7 @@ export async function POST(request) {
   }
 }
 
-// PUT: Merge local guest cart with online user cart upon login
+// Merge guest cart with persistent account cart on login
 export async function PUT(request) {
   try {
     await connectDB()
@@ -98,7 +98,7 @@ export async function PUT(request) {
 
     const mergedCartMap = new Map()
 
-    // Add existing online cart items first
+    // Index existing cart items
     for (const item of (user.cart || [])) {
       if (item && item.id) {
         mergedCartMap.set(item.id, {
@@ -112,7 +112,7 @@ export async function PUT(request) {
       }
     }
 
-    // Merge in guest localCart items
+    // Combine guest items
     for (const item of localCart) {
       const id = String(item.id || item._id)
       if (!id) continue

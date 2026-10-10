@@ -71,14 +71,14 @@ export default function ProductsPageClient({
     }
   }, [currentPage, sortBy, priceRange, selectedCategory, products.length])
 
-  // Only fetch on client when user changes filters or page (initial load is 0ms instant from server)
+  // Fetch on client when filters or pagination change
   useEffect(() => {
     if (hasUserInteracted) {
       fetchProducts()
     }
   }, [fetchProducts, hasUserInteracted])
 
-  // Background adjacent prefetching: pre-warm next & previous pages for 0ms instant pagination
+  // Prefetch adjacent pages
   useEffect(() => {
     const buildParamUrl = (page) => {
       const p = new URLSearchParams({

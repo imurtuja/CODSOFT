@@ -113,7 +113,7 @@ export default function SearchBar({
     } else {
       router.push(`/search?q=${encodeURIComponent(trimmed)}`)
     }
-    // We intentionally keep `query` in state so the user sees their active search term!
+    // Retain query in state to display active search term
   }
 
   const handleClear = () => {

@@ -6,7 +6,7 @@ if (!MONGODB_URI) {
   throw new Error('MONGODB_URI environment variable is required')
 }
 
-// Global cached connection across Next.js hot reloads and serverless invocations
+// Cache connection across development hot-reloads and serverless invocations
 let cached = global.mongoose
 
 if (!cached) {
@@ -14,18 +14,18 @@ if (!cached) {
 }
 
 async function connectDB() {
-  // 1. If connection is already open and ready, return instantly in 0ms
+  // Return existing active connection
   if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn
   }
 
-  // 2. If connection is disconnected or in an error state, reset the promise
+  // Reset cache if connection was dropped
   if (mongoose.connection.readyState === 0 && cached.promise) {
     cached.promise = null
     cached.conn = null
   }
 
-  // 3. If a connection is already in progress, await the existing promise rather than opening duplicate connections
+  // Initiate connection if none in progress
   if (!cached.promise) {
     const opts = {
       bufferCommands: true, // Keep true to safely buffer queries during connection handshake

@@ -88,7 +88,7 @@ function ProductCard({ product }) {
       onTouchStart={handlePrefetch}
       className="bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-gray-200/80 overflow-hidden hover:shadow-md hover:border-gray-300 transition-all duration-200 group flex flex-col h-full"
     >
-      {/* Image Section */}
+      {/* Product image */}
       <div className="relative overflow-hidden">
         <Link 
           href={`/product/${product._id || product.id}`} 
@@ -116,7 +116,7 @@ function ProductCard({ product }) {
           </div>
         </Link>
         
-        {/* Stock Badge */}
+        {/* Stock badge */}
         <div className="absolute top-2 right-2">
           <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full backdrop-blur-sm shadow-sm ${
             product.stock > 0 
@@ -128,14 +128,14 @@ function ProductCard({ product }) {
         </div>
       </div>
       
-      {/* Content Section */}
+      {/* Card details */}
       <div className="p-3.5 sm:p-4 flex flex-col flex-grow">
         {/* Brand */}
         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
           {product.brand}
         </p>
         
-        {/* Product Name */}
+        {/* Product title */}
         <Link 
           href={`/product/${product._id || product.id}`} 
           prefetch={false}
@@ -146,7 +146,7 @@ function ProductCard({ product }) {
           </h3>
         </Link>
 
-        {/* Rating Badge */}
+        {/* Rating */}
         {product.rating ? (
           <div className="flex items-center gap-1.5 mb-2">
             <div className="flex items-center gap-0.5 bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 rounded text-[11px] font-bold text-amber-900">
@@ -159,7 +159,7 @@ function ProductCard({ product }) {
           <div className="h-5 mb-2" />
         )}
 
-        {/* Price Section */}
+        {/* Price */}
         <div className="mb-3">
           <div className="flex items-baseline gap-2 flex-wrap">
             <span className="text-lg sm:text-xl font-black text-gray-900 tracking-tight">
@@ -178,7 +178,7 @@ function ProductCard({ product }) {
           </div>
         </div>
 
-        {/* Action Buttons - Always at bottom */}
+        {/* Action buttons */}
         <div className="flex items-center gap-2 mt-auto pt-1">
           {isInCart && !justAdded ? (
             <Link

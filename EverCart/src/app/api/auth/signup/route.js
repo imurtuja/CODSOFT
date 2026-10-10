@@ -9,7 +9,7 @@ export async function POST(request) {
     
     const { firstName, lastName, email, password } = await request.json()
     
-    // Strict validation to prevent NoSQL operator injection
+    // Validate required inputs
     if (
       !firstName || !lastName || !email || !password ||
       typeof firstName !== 'string' ||
@@ -34,7 +34,7 @@ export async function POST(request) {
       )
     }
     
-    // Check if user already exists
+    // Check existing account
     const existingUser = await User.findOne({ email: cleanEmail })
     if (existingUser) {
       return NextResponse.json(
@@ -43,10 +43,8 @@ export async function POST(request) {
       )
     }
     
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
     
-    // Create user
     const user = await User.create({
       firstName: cleanFirstName,
       lastName: cleanLastName,
@@ -55,7 +53,6 @@ export async function POST(request) {
       role: 'user'
     })
     
-    // Import jwt is needed at top or use inline
     const jwt = (await import('jsonwebtoken')).default
     const token = jwt.sign(
       {
@@ -67,7 +64,7 @@ export async function POST(request) {
       { expiresIn: '7d', algorithm: 'HS256' }
     )
 
-    // Return user without password
+    // Exclude password hash from payload
     const { password: _, ...userWithoutPassword } = user.toObject()
     
     return NextResponse.json({

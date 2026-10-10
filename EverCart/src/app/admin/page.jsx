@@ -7,7 +7,7 @@ import Loading from '../../components/Loading'
 import NotFoundView from '../../components/NotFoundView'
 import { toast } from '../../components/Toast'
 
-// Helper for status dot colors
+// Status badge dot color
 function statusDotColor(st) {
   switch (st) {
     case 'delivered': return 'bg-emerald-500'
@@ -19,7 +19,7 @@ function statusDotColor(st) {
   }
 }
 
-// Helper for payment method display (replaces technical gateway names like 'razorpay' with real customer payment methods)
+// Payment method display label
 function getPaymentMethodDisplay(order) {
   if (!order) return 'Cash on Delivery'
   if (order.paymentMethod === 'cod') return 'Cash on Delivery'
@@ -34,7 +34,7 @@ function getPaymentMethodDisplay(order) {
   return 'UPI / Card'
 }
 
-// Resolve external storefront URLs (returns localhost:3000 locally and evercart.murtuja.in in production)
+// Storefront origin resolution
 function getStorefrontUrl(path = '/') {
   if (typeof window === 'undefined') return path
   const host = window.location.host || ''
@@ -54,7 +54,7 @@ function getStorefrontUrl(path = '/') {
   return `https://evercart.murtuja.in${cleanPath}`
 }
 
-// Sleek Hover Copy Tooltip Component (Positioned on bottom side with zero scaling and no blue selection)
+// Copy-to-clipboard cell with tooltip
 function CopyableCell({ text, displayText, className = '', copyLabel = '' }) {
   const [copied, setCopied] = useState(false)
 
@@ -82,7 +82,7 @@ function CopyableCell({ text, displayText, className = '', copyLabel = '' }) {
         {displayText || text}
       </button>
 
-      {/* Floating Tooltip Tag on Cursor Hover - Bottom Side */}
+      {/* Hover tooltip */}
       <div className="absolute top-full left-1/2 -translate-x-1/2 pt-1 pointer-events-none hidden group-hover/copy:flex flex-col items-center z-30">
         <div className="w-1.5 h-1.5 bg-gray-900 rotate-45 -mb-1" />
         <div className="bg-gray-900 text-white text-[10px] font-semibold px-2 py-0.5 rounded shadow-md whitespace-nowrap flex items-center gap-1">
@@ -102,7 +102,7 @@ function CopyableCell({ text, displayText, className = '', copyLabel = '' }) {
   )
 }
 
-// Custom Minimal Checkbox Component
+// Checkbox input
 function CustomCheckbox({ checked, indeterminate = false, onChange, title = '' }) {
   return (
     <button
@@ -133,7 +133,7 @@ function CustomCheckbox({ checked, indeterminate = false, onChange, title = '' }
   )
 }
 
-// Custom Minimal Dropdown Component (matches EverCart light theme)
+// Dropdown select
 function CustomDropdown({
   value,
   onChange,
@@ -243,7 +243,7 @@ export default function AdminPage() {
   const [adminUser, setAdminUser] = useState(null)
   const [lastSyncTime, setLastSyncTime] = useState(null)
 
-  // Orders Filter, Search, Pagination & Selection
+  // Order filtering and pagination state
   const [orderSearch, setOrderSearch] = useState('')
   const [orderStatusFilter, setOrderStatusFilter] = useState('all')
   const [orderPaymentFilter, setOrderPaymentFilter] = useState('all')
@@ -256,7 +256,7 @@ export default function AdminPage() {
   const [inspectingOrder, setInspectingOrder] = useState(null)
   const [activeStatusMenu, setActiveStatusMenu] = useState(null) // { orderKey, currentStatus, rect }
 
-  // Close floating status dropdown on outside click, window resize or scroll
+  // Close status dropdown on outside click, scroll, or resize
   useEffect(() => {
     if (!activeStatusMenu) return
     const handleClose = () => setActiveStatusMenu(null)
@@ -270,13 +270,13 @@ export default function AdminPage() {
     }
   }, [activeStatusMenu])
 
-  // Products Filter & Search
+  // Product catalog filters
   const [productSearch, setProductSearch] = useState('')
   const [productCategoryFilter, setProductCategoryFilter] = useState('all')
   const [productStockFilter, setProductStockFilter] = useState('all')
   const [updatingStockId, setUpdatingStockId] = useState(null)
 
-  // Product Modal (Add / Edit) state matching specification
+  // Product modal state
   const [showProductModal, setShowProductModal] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
   const [productFormSaving, setProductFormSaving] = useState(false)
@@ -299,7 +299,7 @@ export default function AdminPage() {
     isSpotlight: false
   })
 
-  // Smooth Sliding Pill Indicators (No Flashing, No Rubberband, Pure Easing)
+  // Active tab indicator positioning
   const mainTabsRef = useRef(null)
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 })
 
@@ -353,7 +353,7 @@ export default function AdminPage() {
     }
   }, [updateFilterIndicator, activeTab, orders.length])
 
-  // 1. Session & Auth Verification
+  // Session verification
   const verifySession = useCallback(async () => {
     setAuthChecking(true)
     try {
@@ -366,7 +366,7 @@ export default function AdminPage() {
         headers['Authorization'] = `Bearer ${storedToken}`
       }
 
-      // 1. Check session API endpoint via secure HttpOnly cookies + optional stored token
+      // Verify session via endpoint and cookies
       const cookieRes = await fetch('/api/auth/admin-session', {
         headers,
         credentials: 'include',
@@ -389,14 +389,14 @@ export default function AdminPage() {
         }
       }
 
-      // Check localStorage for existing session
+      // Check stored user
       const storedUserRaw = localStorage.getItem('currentUser')
       let storedUser = null
       try {
         storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null
       } catch (e) {}
 
-      // If user is explicitly a non-admin, deny access without wiping user storefront session
+      // Deny non-admin users without clearing their customer session
       if (storedUser && storedUser.role !== 'admin') {
         setIsAuthorized(false)
         setAdminUser(null)
@@ -417,7 +417,7 @@ export default function AdminPage() {
     }
   }, [])
 
-  // Helper for admin authorization headers across all queries and mutations
+  // Authorization headers for admin requests
   const getAdminHeaders = useCallback(() => {
     const raw = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     const token = (raw && raw !== 'null' && raw !== 'undefined') ? raw.trim() : null
@@ -426,7 +426,7 @@ export default function AdminPage() {
     return headers
   }, [])
 
-  // 2. Load Core Data (Orders & Products)
+  // Fetch products and orders data
   const loadData = useCallback(async (overrideToken = null) => {
     try {
       setLoading(true)
@@ -508,7 +508,7 @@ export default function AdminPage() {
     }
   }
 
-  // Update Order Status via API
+  // Update order status
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       setUpdatingOrderId(orderId)
@@ -546,7 +546,7 @@ export default function AdminPage() {
     }
   }
 
-  // Bulk update status for all checked orders
+  // Bulk update order status
   const handleBulkStatusUpdate = async (newStatus) => {
     if (selectedOrderIds.length === 0) return
     const count = selectedOrderIds.length
@@ -581,7 +581,7 @@ export default function AdminPage() {
     }
   }
 
-  // Inline Quick Stock Adjustment
+  // Quick inline stock adjustment
   const handleQuickStockAdjust = async (productId, delta) => {
     const product = products.find(p => p._id === productId)
     if (!product) return
@@ -609,7 +609,7 @@ export default function AdminPage() {
       })
 
       if (!response.ok) {
-        // Rollback
+        // Revert on error
         setProducts(prev =>
           (Array.isArray(prev) ? prev : []).map(p =>
             p._id === productId ? { ...p, stock: currentStock } : p
@@ -624,7 +624,7 @@ export default function AdminPage() {
     }
   }
 
-  // Quick Toggle Product Featured
+  // Toggle featured flag
   const handleToggleProductFeatured = async (productId, currentVal) => {
     try {
       const headers = getAdminHeaders()
@@ -646,7 +646,7 @@ export default function AdminPage() {
       if (res.ok) {
         toast.success(!currentVal ? 'Product marked as Featured on homepage' : 'Product removed from Featured')
       } else {
-        // Rollback
+        // Revert on error
         setProducts(prev =>
           (Array.isArray(prev) ? prev : []).map(p =>
             p._id === productId ? { ...p, isFeatured: currentVal } : p
@@ -659,14 +659,14 @@ export default function AdminPage() {
     }
   }
 
-  // Quick Toggle Product Spotlight (Homepage Top Spotlight Deal)
+  // Toggle spotlight flag
   const handleToggleProductSpotlight = async (productId, nextSpotlight) => {
     const targetProd = (Array.isArray(products) ? products : []).find(p => p._id === productId)
     const prodName = targetProd?.name || 'Product'
     try {
       const headers = getAdminHeaders()
 
-      // Optimistic update: If enabling, set target to true and unset all other products
+      // Optimistic update
       setProducts(prev =>
         (Array.isArray(prev) ? prev : []).map(p => {
           if (p._id === productId) {
@@ -699,7 +699,7 @@ export default function AdminPage() {
     }
   }
 
-  // Quick Toggle Product Active / Inactive Status
+  // Toggle active status
   const handleToggleProductStatus = async (productId, currentStatus) => {
     const nextStatus = currentStatus === 'active' ? 'inactive' : 'active'
     try {
@@ -722,7 +722,7 @@ export default function AdminPage() {
       if (res.ok) {
         toast.success(`Product status set to ${nextStatus.toUpperCase()}`)
       } else {
-        // Rollback
+        // Revert on error
         setProducts(prev =>
           (Array.isArray(prev) ? prev : []).map(p =>
             p._id === productId ? { ...p, status: currentStatus } : p
@@ -735,7 +735,7 @@ export default function AdminPage() {
     }
   }
 
-  // Product Delete
+  // Delete product
   const handleDeleteProduct = async (productId, productName) => {
     if (!window.confirm(`Permanently delete "${productName}" from the store catalog?`)) {
       return
@@ -762,11 +762,11 @@ export default function AdminPage() {
     }
   }
 
-  // Open Edit Product Modal
+  // Open edit modal
   const openEditModal = (product) => {
     setEditingProduct(product)
     
-    // Parse specifications map/object into key-value array
+    // Map product specifications to key-value pairs
     let specsArray = []
     if (product.specifications) {
       if (typeof product.specifications === 'object') {
@@ -799,7 +799,7 @@ export default function AdminPage() {
     setShowProductModal(true)
   }
 
-  // Open Add Product Modal
+  // Open add product modal
   const openAddModal = () => {
     setEditingProduct(null)
     setProductForm({
@@ -823,7 +823,7 @@ export default function AdminPage() {
     setShowProductModal(true)
   }
 
-  // Save Product (Add or Edit)
+  // Save product
   const handleSaveProduct = async (e) => {
     e.preventDefault()
     setProductFormSaving(true)
@@ -834,25 +834,25 @@ export default function AdminPage() {
       const method = editingProduct ? 'PUT' : 'POST'
       const url = editingProduct ? `/api/products/${editingProduct._id}` : '/api/products'
 
-      // Clean images (up to 10)
+      // Sanitize image URLs
       const cleanImages = productForm.images
         .map(img => img.trim())
         .filter(Boolean)
         .slice(0, 10)
 
-      // Clean features (up to 10)
+      // Sanitize features
       const cleanFeatures = productForm.features
         .map(f => f.trim())
         .filter(Boolean)
         .slice(0, 10)
 
-      // Clean tags (up to 10)
+      // Sanitize tags
       const cleanTags = productForm.tags
         .map(t => t.trim())
         .filter(Boolean)
         .slice(0, 10)
 
-      // Clean specifications (up to 15)
+      // Sanitize specifications
       const cleanSpecs = {}
       productForm.specifications
         .slice(0, 15)
@@ -916,7 +916,7 @@ export default function AdminPage() {
     }
   }
 
-  // Export Filtered Orders to CSV
+  // Export orders to CSV
   const handleExportCSV = () => {
     if (filteredOrders.length === 0) {
       toast.warning('No orders match the current filter to export')
@@ -975,7 +975,7 @@ export default function AdminPage() {
     toast.success(`Exported ${filteredOrders.length} orders to CSV`)
   }
 
-  // Calculations & Executive KPIs
+  // Summary metrics
   const metrics = useMemo(() => {
     const validOrders = Array.isArray(orders) ? orders : []
     const validProducts = Array.isArray(products) ? products : []
@@ -999,7 +999,7 @@ export default function AdminPage() {
     const onlineOrders = nonCancelled.filter(o => o.paymentMethod !== 'cod')
     const onlineRevenue = onlineOrders.reduce((sum, o) => sum + (Number(o.totalAmount || o.total) || 0), 0)
 
-    // Indian GST 18% calculation
+    // Inclusive GST (18%) breakdown
     const taxableSales = Math.round((totalRevenue / 1.18) * 100) / 100
     const totalGst = Math.round((totalRevenue - taxableSales) * 100) / 100
     const cgst = Math.round((totalGst / 2) * 100) / 100
@@ -1026,7 +1026,7 @@ export default function AdminPage() {
     }
   }, [orders, products])
 
-  // Filtered Orders
+  // Filter orders
   const filteredOrders = useMemo(() => {
     if (!Array.isArray(orders)) return []
     let list = orders.filter(order => {
@@ -1067,7 +1067,7 @@ export default function AdminPage() {
       return true
     })
 
-    // Sorting
+    // Sort orders
     list = [...list].sort((a, b) => {
       const dateA = new Date(a.orderDate || a.createdAt || 0).getTime()
       const dateB = new Date(b.orderDate || b.createdAt || 0).getTime()
@@ -1083,7 +1083,7 @@ export default function AdminPage() {
     return list
   }, [orders, orderStatusFilter, orderPaymentFilter, orderSearch, orderSortBy])
 
-  // Paginated Orders
+  // Paginated slice
   const paginatedOrders = useMemo(() => {
     const start = (orderPage - 1) * ordersPerPage
     return filteredOrders.slice(start, start + ordersPerPage)
@@ -1091,7 +1091,7 @@ export default function AdminPage() {
 
   const totalOrderPages = Math.max(1, Math.ceil(filteredOrders.length / ordersPerPage))
 
-  // Filtered Products
+  // Filter products
   const filteredProducts = useMemo(() => {
     if (!Array.isArray(products)) return []
     return products.filter(product => {
@@ -1116,7 +1116,7 @@ export default function AdminPage() {
     })
   }, [products, productCategoryFilter, productStockFilter, productSearch])
 
-  // Categories set
+  // Distinct categories
   const categoriesList = useMemo(() => {
     if (!Array.isArray(products)) return []
     const set = new Set()
@@ -1194,7 +1194,7 @@ export default function AdminPage() {
     return <Loading />
   }
 
-  // Unauthorized view: Show 404 Not Found for non-admin users or guests
+  // Not found view for unauthorized visitors
   if (!isAuthorized) {
     return (
       <div className="min-h-screen flex flex-col justify-center bg-white">
@@ -1203,10 +1203,10 @@ export default function AdminPage() {
     )
   }
 
-  // Authenticated Admin Console (Clean Light Theme)
+  // Admin dashboard view
   return (
     <div className="min-h-screen bg-gray-50/70 text-gray-900 font-sans antialiased pb-12">
-      {/* 1. TOP EXECUTIVE COMMAND BAR (COMPACT LIGHT THEME) */}
+      {/* Header bar */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200/90 shadow-2xs">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-3">
           {/* Brand & Breadcrumbs */}
@@ -1294,9 +1294,9 @@ export default function AdminPage() {
       </header>
 
       <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-3.5 space-y-3.5">
-        {/* 2. EXECUTIVE METRICS STRIP (COMPACT) */}
+        {/* Metrics strip */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-          {/* Card 1: Gross Sales */}
+          {/* Gross sales */}
           <div className="bg-white rounded-xl border border-gray-200/90 p-3.5 shadow-2xs hover:shadow-xs transition-shadow">
             <div className="flex items-center justify-between mb-1.5">
               <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">
@@ -1315,7 +1315,7 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Card 2: Order Volume */}
+          {/* Total orders */}
           <div className="bg-white rounded-xl border border-gray-200/90 p-3.5 shadow-2xs hover:shadow-xs transition-shadow">
             <div className="flex items-center justify-between mb-1.5">
               <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
@@ -1338,7 +1338,7 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Card 3: Action Required (Pending) */}
+          {/* Pending fulfillment */}
           <div className="bg-white rounded-xl border border-gray-200/90 p-3.5 shadow-2xs hover:shadow-xs transition-shadow">
             <div className="flex items-center justify-between mb-1.5">
               <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
@@ -1360,7 +1360,7 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Card 4: Catalog & Inventory Health */}
+          {/* Inventory health */}
           <div className="bg-white rounded-xl border border-gray-200/90 p-3.5 shadow-2xs hover:shadow-xs transition-shadow">
             <div className="flex items-center justify-between mb-1.5">
               <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
@@ -1384,12 +1384,12 @@ export default function AdminPage() {
           </div>
         </section>
 
-        {/* 3. PRIMARY SECTION TABS (MODERN BORDER-BOTTOM STRIP) */}
+        {/* Section tabs */}
         <section className="border-b border-gray-200">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-end justify-between gap-3">
-            {/* Primary Navigation Tabs */}
+            {/* Primary navigation tabs */}
             <nav ref={mainTabsRef} className="relative flex items-center gap-1 sm:gap-2 select-none overflow-x-auto no-scrollbar">
-              {/* Smooth Sliding Underline Indicator (Glides horizontally on the border-bottom line) */}
+              {/* Tab underline indicator */}
               <div
                 className="absolute -bottom-[1px] h-[2.5px] bg-black rounded-t-full transition-all duration-200 ease-out pointer-events-none z-10"
                 style={{
@@ -1399,7 +1399,7 @@ export default function AdminPage() {
                 }}
               />
 
-              {/* Tab 1: Orders */}
+              {/* Orders tab */}
               <button
                 data-tab="orders"
                 onClick={() => setActiveTab('orders')}
@@ -1420,7 +1420,7 @@ export default function AdminPage() {
                 </span>
               </button>
 
-              {/* Tab 2: Inventory */}
+              {/* Inventory tab */}
               <button
                 data-tab="products"
                 onClick={() => setActiveTab('products')}
@@ -1441,7 +1441,7 @@ export default function AdminPage() {
                 </span>
               </button>
 
-              {/* Tab 3: Reports */}
+              {/* Reports tab */}
               <button
                 data-tab="analytics"
                 onClick={() => setActiveTab('analytics')}
@@ -1458,7 +1458,7 @@ export default function AdminPage() {
               </button>
             </nav>
 
-            {/* Primary Action Button (Right Side) */}
+            {/* Primary action */}
             <div className="flex items-center gap-2 pb-2 shrink-0">
               {activeTab === 'orders' && (
                 <button
@@ -1487,18 +1487,16 @@ export default function AdminPage() {
           </div>
         </section>
 
-        {/* ========================================================================= */}
-        {/* TAB 1: ORDER MANAGEMENT & FULFILLMENT                                    */}
-        {/* ========================================================================= */}
+        {/* Orders tab */}
         {activeTab === 'orders' && (
           <section className="space-y-2.5 animate-in fade-in duration-150">
-            {/* Quick Status Filter Tabs (Segmented Capsule with Micro Status Dots & Elevated White Slider) */}
+            {/* Status filter tabs */}
             <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar pt-0.5">
               <div
                 ref={orderFiltersRef}
                 className="relative flex items-center gap-1 p-1 bg-gray-100/80 border border-gray-200/80 rounded-xl overflow-x-auto no-scrollbar text-xs select-none w-fit max-w-full"
               >
-                {/* Elevated Floating White Capsule Slider */}
+                {/* Active filter pill */}
                 <div
                   className="absolute top-1 bottom-1 bg-white rounded-lg shadow-xs border border-gray-200/70 transition-all duration-200 ease-out pointer-events-none"
                   style={{
@@ -1719,7 +1717,7 @@ export default function AdminPage() {
                             key={orderKey}
                             className={`group/row transition-colors ${isSelected ? 'bg-blue-50/40 hover:bg-blue-50/60' : 'hover:bg-gray-50/80'}`}
                           >
-                            {/* 1. SL No. with Multi-Select Checkbox (Zero-shift hover transition) */}
+                            {/* Index and selection */}
                             <td className="px-[5px] py-[5px] text-center whitespace-nowrap w-[32px] min-w-[32px] max-w-[32px]">
                               <div className="relative w-4 h-4 mx-auto flex items-center justify-center">
                                 {isSelected || selectedOrderIds.length > 0 ? (
@@ -1751,7 +1749,7 @@ export default function AdminPage() {
                               </div>
                             </td>
 
-                            {/* 2. Date and Time (Fixed 86px) */}
+                            {/* Date and time */}
                             <td className="pl-[3px] pr-[5px] py-[5px] whitespace-nowrap w-[86px] min-w-[86px] max-w-[86px]">
                               <div className="text-xs font-semibold text-gray-900 leading-tight">
                                 {new Date(order.orderDate || order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -1761,7 +1759,7 @@ export default function AdminPage() {
                               </div>
                             </td>
 
-                            {/* 3. Order ID (Fixed 120px) */}
+                            {/* Order ID */}
                             <td className="px-[5px] py-[5px] whitespace-nowrap w-[120px] min-w-[120px] max-w-[120px]">
                               <CopyableCell
                                 text={order.orderId || order._id}
@@ -1771,7 +1769,7 @@ export default function AdminPage() {
                               />
                             </td>
 
-                            {/* 4. Invoice No. (Fixed 142px) */}
+                            {/* Invoice number */}
                             <td className="px-[5px] py-[5px] whitespace-nowrap w-[142px] min-w-[142px] max-w-[142px]">
                               <CopyableCell
                                 text={invoiceNum}
@@ -1781,14 +1779,14 @@ export default function AdminPage() {
                               />
                             </td>
 
-                            {/* 5. Name (Fixed 127px) */}
+                            {/* Customer name */}
                             <td className="px-[5px] py-[5px] whitespace-nowrap w-[127px] min-w-[127px] max-w-[127px]">
                               <div className="font-semibold text-gray-900 text-xs truncate max-w-[117px]" title={(ship.firstName || order.user?.name || 'Customer') + (ship.lastName ? ` ${ship.lastName}` : '')}>
                                 {(ship.firstName || order.user?.name || 'Customer') + (ship.lastName ? ` ${ship.lastName}` : '')}
                               </div>
                             </td>
 
-                            {/* 6. Phone No. (Fixed 96px) */}
+                            {/* Phone number */}
                             <td className="px-[5px] py-[5px] whitespace-nowrap w-[96px] min-w-[96px] max-w-[96px]">
                               <CopyableCell
                                 text={ship.phone || order.phone}
@@ -1798,7 +1796,7 @@ export default function AdminPage() {
                               />
                             </td>
 
-                            {/* 7. Product Name (Fixed 260px) */}
+                            {/* Product details */}
                             <td className="px-[5px] py-[5px] w-[260px] min-w-[260px] max-w-[260px]">
                               {(() => {
                                 const items = Array.isArray(order.items) ? order.items : []
@@ -1849,7 +1847,7 @@ export default function AdminPage() {
                               })()}
                             </td>
 
-                            {/* 8. Address (Fixed 165px) */}
+                            {/* Shipping address */}
                             <td className="px-[5px] py-[5px] whitespace-nowrap w-[165px] min-w-[165px] max-w-[165px]">
                               <div className="text-gray-600 leading-tight max-w-[155px]">
                                 <div className="truncate text-gray-800 text-xs" title={ship.address || ''}>
@@ -1861,14 +1859,14 @@ export default function AdminPage() {
                               </div>
                             </td>
 
-                            {/* 9. Amount (Fixed 78px) */}
+                            {/* Order total */}
                             <td className="px-[5px] py-[5px] whitespace-nowrap text-right w-[78px] min-w-[78px] max-w-[78px]">
                               <span className="font-semibold text-gray-900 text-xs sm:text-sm">
                                 {formatPrice(order.totalAmount || order.total)}
                               </span>
                             </td>
 
-                            {/* 10. Payment (Fixed 103px) */}
+                            {/* Payment status */}
                             <td className="px-[5px] py-[5px] whitespace-nowrap w-[103px] min-w-[103px] max-w-[103px]">
                               <div className="text-xs font-semibold text-gray-900 leading-tight">
                                 {getPaymentMethodDisplay(order)}
@@ -1882,7 +1880,7 @@ export default function AdminPage() {
                               </div>
                             </td>
 
-                            {/* 11. Fulfillment (Fixed 100px) */}
+                            {/* Fulfillment status */}
                             <td className="px-[5px] py-[5px] whitespace-nowrap w-[100px] min-w-[100px] max-w-[100px]">
                               <div className="flex items-center gap-1.5">
                                 <button
@@ -1922,7 +1920,7 @@ export default function AdminPage() {
                               </div>
                             </td>
 
-                            {/* 12. Actions: Quick View (Eye) & Open Receipt (Fixed 65px) */}
+                            {/* Actions */}
                             <td className="pl-[5px] pr-[8px] py-[5px] whitespace-nowrap text-right w-[65px] min-w-[65px] max-w-[65px]">
                               <div className="inline-flex items-center justify-end gap-0.5">
                                 <button
@@ -2030,12 +2028,10 @@ export default function AdminPage() {
           </section>
         )}
 
-        {/* ========================================================================= */}
-        {/* TAB 2: PRODUCTS CATALOG & INVENTORY MANAGEMENT                           */}
-        {/* ========================================================================= */}
+        {/* Products tab */}
         {activeTab === 'products' && (
           <section className="space-y-2.5 animate-in fade-in duration-150">
-            {/* Products Search & Filter Strip (Compact) */}
+            {/* Search and filter toolbar */}
             <div className="bg-white rounded-lg border border-gray-200 p-2 sm:p-2.5 shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2">
               <div className="relative flex-1 min-w-[220px]">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -2087,7 +2083,7 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Inventory Table Container (Compact & Scrollbar-free) */}
+            {/* Inventory table */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden">
               <div className="overflow-x-auto overflow-y-hidden no-scrollbar">
                 <table className="w-[1371.61px] min-w-[1371.61px] text-left text-xs divide-y divide-gray-200">
@@ -2113,12 +2109,12 @@ export default function AdminPage() {
 
                         return (
                           <tr key={product._id} className="hover:bg-gray-50/80 transition-colors">
-                            {/* 1. SL No. */}
+                            {/* Index */}
                             <td className="px-[5px] py-[5px] text-center whitespace-nowrap text-gray-500 text-xs w-[32px] min-w-[32px] max-w-[32px]">
                               {idx + 1}
                             </td>
 
-                            {/* 2. Product Name */}
+                            {/* Product name */}
                             <td className="px-[5px] py-[5px] w-[570px] min-w-[570px] max-w-[570px]">
                               <div className="flex items-center gap-2.5">
                                 <div className="w-9 h-9 rounded-md bg-gray-100 border border-gray-200 shrink-0 overflow-hidden flex items-center justify-center relative">
@@ -2144,21 +2140,21 @@ export default function AdminPage() {
                               </div>
                             </td>
 
-                            {/* 3. SKU */}
+                            {/* SKU */}
                             <td className="px-[5px] py-[5px] whitespace-nowrap w-[140px] min-w-[140px] max-w-[140px]">
                               <span className="text-xs font-medium text-gray-700">
                                 {product.sku || product._id?.slice(-8).toUpperCase()}
                               </span>
                             </td>
 
-                            {/* 4. Category (Centered) */}
+                            {/* Category */}
                             <td className="px-[5px] py-[5px] text-center whitespace-nowrap w-[90px] min-w-[90px] max-w-[90px]">
                               <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 text-gray-700 capitalize">
                                 {product.category || 'General'}
                               </span>
                             </td>
 
-                            {/* 5. Price (Right sided) */}
+                            {/* Price */}
                             <td className="px-[5px] py-[5px] text-right whitespace-nowrap w-[85px] min-w-[85px] max-w-[85px]">
                               <div className="font-semibold text-gray-900 text-xs sm:text-sm leading-tight">
                                 {formatPrice(product.price)}
@@ -2170,7 +2166,7 @@ export default function AdminPage() {
                               )}
                             </td>
 
-                            {/* 6. Stock (Centered) */}
+                            {/* Stock */}
                             <td className="px-[5px] py-[5px] text-center whitespace-nowrap w-[107px] min-w-[107px] max-w-[107px]">
                               {stock <= 0 ? (
                                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
@@ -2184,7 +2180,7 @@ export default function AdminPage() {
                               )}
                             </td>
 
-                            {/* 7. Spotlight Toggle (Home Page Top Spotlight Deal) */}
+                            {/* Spotlight toggle */}
                             <td className="px-[5px] py-[5px] text-center whitespace-nowrap w-[107.61px] min-w-[107.61px] max-w-[107.61px]">
                               <button
                                 type="button"
@@ -2212,7 +2208,7 @@ export default function AdminPage() {
                               </button>
                             </td>
 
-                            {/* 8. Status (Centered) */}
+                            {/* Status */}
                             <td className="px-[5px] py-[5px] text-center whitespace-nowrap w-[140px] min-w-[140px] max-w-[140px]">
                               <div className="flex items-center justify-center gap-1.5">
                                 <button
@@ -2239,7 +2235,7 @@ export default function AdminPage() {
                               </div>
                             </td>
 
-                            {/* 9. Actions (Centered, icons only) */}
+                            {/* Actions */}
                             <td className="px-[5px] py-[5px] text-center whitespace-nowrap w-[100px] min-w-[100px] max-w-[100px]">
                               <div className="flex items-center justify-center gap-1">
                                 <a
@@ -2304,9 +2300,7 @@ export default function AdminPage() {
           </section>
         )}
 
-        {/* ========================================================================= */}
-        {/* TAB 3: FINANCIAL LEDGER & GST REPORT                                      */}
-        {/* ========================================================================= */}
+        {/* Reports tab */}
         {activeTab === 'analytics' && (
           <section className="space-y-3 animate-in fade-in duration-150">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -2368,16 +2362,11 @@ export default function AdminPage() {
         )}
       </main>
 
-      {/* ========================================================================= */}
-      {/* MODAL 1: ORDER INSPECTION SLIDE-OVER                                      */}
-      {/* ========================================================================= */}
-      {/* ========================================================================= */}
-      {/* MODAL 1: ORDER QUICK VIEW POPUP                                           */}
-      {/* ========================================================================= */}
+      {/* Order inspection modal */}
       {inspectingOrder && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-150">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] shadow-2xl border border-gray-200 flex flex-col overflow-hidden my-auto animate-in zoom-in-95 duration-150">
-            {/* 1. Fixed Header */}
+            {/* Modal header */}
             <div className="px-5 py-3.5 border-b border-gray-200 flex items-center justify-between bg-white shrink-0">
               <div className="min-w-0 flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-800 shrink-0">
@@ -2412,9 +2401,9 @@ export default function AdminPage() {
               </button>
             </div>
 
-            {/* 2. Scrollable Body */}
+            {/* Modal body */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5">
-              {/* Quick Status Update Bar */}
+              {/* Status update actions */}
               <div className="p-2.5 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-between gap-2 flex-wrap">
                 <span className="font-bold text-gray-700 text-xs">Update Status:</span>
                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -2439,7 +2428,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Customer Contact & Destination Info */}
+              {/* Customer and shipping details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div className="p-3 rounded-xl border border-gray-200 bg-gray-50/50 space-y-1.5">
                   <span className="font-bold text-gray-400 uppercase tracking-wider text-[10px]">Customer Details</span>
@@ -2473,7 +2462,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Ordered Items Scrollable List */}
+              {/* Line items */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px]">
@@ -2514,7 +2503,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Invoice Breakdown */}
+              {/* Order summary */}
               <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 space-y-1.5 text-xs">
                 <div className="flex items-center justify-between text-gray-600 text-[11px]">
                   <span>Subtotal</span>
@@ -2535,7 +2524,7 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* 3. Fixed Footer */}
+            {/* Modal footer */}
             <div className="px-5 py-3 border-t border-gray-200 bg-white flex items-center justify-between gap-3 shrink-0">
               <a
                 href={getStorefrontUrl(`/order/${inspectingOrder.orderId || inspectingOrder._id}`)}
@@ -2560,13 +2549,11 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* MODAL 2: ADD / EDIT PRODUCT MODAL (INDUSTRY-LEVEL 2-COLUMN DESIGN)        */}
-      {/* ========================================================================= */}
+      {/* Product modal */}
       {showProductModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in duration-150">
           <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[92vh] shadow-2xl border border-gray-200 flex flex-col overflow-hidden my-auto">
-            {/* 1. STICKY MODAL HEADER */}
+            {/* Modal header */}
             <div className="px-5 sm:px-6 py-3.5 border-b border-gray-200 flex items-center justify-between bg-white sticky top-0 z-30">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-8 h-8 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-800 shrink-0">
@@ -2622,13 +2609,13 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* 2. FORM BODY (2-COLUMN RESPONSIVE LAYOUT) */}
+            {/* Form content */}
             <form onSubmit={handleSaveProduct} className="flex-1 overflow-y-auto flex flex-col justify-between">
               <div className="p-4 sm:p-6 bg-gray-50/50 flex-1">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                  {/* LEFT COLUMN: CORE PRODUCT DATA (8 COLS) */}
+                  {/* Core product details */}
                   <div className="lg:col-span-8 space-y-4">
-                    {/* Card 1: General Details */}
+                    {/* General details */}
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-2xs space-y-3.5">
                       <div className="flex items-center justify-between pb-2 border-b border-gray-100">
                         <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">
@@ -2698,7 +2685,7 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    {/* Card 2: Visual Media & Product Images */}
+                    {/* Product images */}
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-2xs space-y-3.5">
                       <div className="flex items-center justify-between pb-2 border-b border-gray-100">
                         <div>
@@ -2714,7 +2701,7 @@ export default function AdminPage() {
                         </span>
                       </div>
 
-                      {/* Visual Gallery Grid */}
+                      {/* Image gallery */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         {productForm.images.map((imgUrl, imgIndex) => (
                           <div
@@ -2725,7 +2712,7 @@ export default function AdminPage() {
                                 : 'border-gray-200 bg-white hover:border-gray-300'
                             }`}
                           >
-                            {/* Live Thumbnail */}
+                            {/* Thumbnail preview */}
                             <div className="w-12 h-12 rounded-md bg-gray-100 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center relative">
                               {imgUrl ? (
                                 <Image
@@ -2748,7 +2735,7 @@ export default function AdminPage() {
                               )}
                             </div>
 
-                            {/* URL Input */}
+                            {/* Image URL input */}
                             <div className="flex-1 min-w-0">
                               <input
                                 type="url"
@@ -2763,7 +2750,7 @@ export default function AdminPage() {
                               />
                             </div>
 
-                            {/* Remove Button */}
+                            {/* Remove image */}
                             {productForm.images.length > 1 && (
                               <button
                                 type="button"
@@ -2797,7 +2784,7 @@ export default function AdminPage() {
                       )}
                     </div>
 
-                    {/* Card 3: Key Features */}
+                    {/* Key features */}
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-2xs space-y-3.5">
                       <div className="flex items-center justify-between pb-2 border-b border-gray-100">
                         <div>
@@ -2863,7 +2850,7 @@ export default function AdminPage() {
                       )}
                     </div>
 
-                    {/* Card 4: Technical Specifications */}
+                    {/* Technical specifications */}
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-2xs space-y-3.5">
                       <div className="flex items-center justify-between pb-2 border-b border-gray-100">
                         <div>
@@ -2937,7 +2924,7 @@ export default function AdminPage() {
                       )}
                     </div>
 
-                    {/* Card 5: Search Tags */}
+                    {/* Search tags */}
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-2xs space-y-3.5">
                       <div className="flex items-center justify-between pb-2 border-b border-gray-100">
                         <div>
@@ -2995,9 +2982,8 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  {/* RIGHT COLUMN: MERCHANDISING, PRICING & INVENTORY (4 COLS) */}
+                  {/* Merchandising and pricing */}
                   <div className="lg:col-span-4 space-y-4">
-                    {/* Card 1: Homepage Showcase & Merchandising (CRITICAL USER REQUIREMENT) */}
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-2xs space-y-3.5">
                       <div className="pb-2 border-b border-gray-100 flex items-center justify-between">
                         <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">
@@ -3006,7 +2992,7 @@ export default function AdminPage() {
                         <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                       </div>
 
-                      {/* Homepage Top Spotlight Toggle */}
+                      {/* Top spotlight toggle */}
                       <div
                         role="checkbox"
                         aria-checked={productForm.isSpotlight}
@@ -3025,7 +3011,7 @@ export default function AdminPage() {
                         }`}
                       >
                         <div className="flex items-start gap-2.5">
-                          {/* Visual Checkmark Box */}
+                          {/* Checkbox indicator */}
                           <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all shrink-0 mt-0.5 ${
                             productForm.isSpotlight
                               ? 'bg-amber-500 border-amber-500 text-white shadow-2xs'
@@ -3056,7 +3042,7 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      {/* Featured Product Grid Toggle */}
+                      {/* Featured product toggle */}
                       <div
                         role="checkbox"
                         aria-checked={productForm.isFeatured}
@@ -3075,7 +3061,7 @@ export default function AdminPage() {
                         }`}
                       >
                         <div className="flex items-start gap-2.5">
-                          {/* Visual Checkmark Box */}
+                          {/* Checkbox indicator */}
                           <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all shrink-0 mt-0.5 ${
                             productForm.isFeatured
                               ? 'bg-black border-black text-white shadow-2xs'
@@ -3106,7 +3092,7 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    {/* Card 2: Pricing & Live Discount Calculator */}
+                    {/* Pricing */}
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-2xs space-y-3.5">
                       <div className="pb-2 border-b border-gray-100">
                         <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">
@@ -3114,7 +3100,7 @@ export default function AdminPage() {
                         </h4>
                       </div>
 
-                      {/* Selling Price */}
+                      {/* Selling price */}
                       <div>
                         <label className="block font-semibold text-gray-800 mb-1 text-xs">
                           Selling Price (₹) <span className="text-rose-500">*</span>
@@ -3134,7 +3120,7 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      {/* Original Price (MRP) */}
+                      {/* Original price */}
                       <div>
                         <label className="block font-semibold text-gray-800 mb-1 text-xs">
                           Original Price / MRP (₹)
@@ -3153,7 +3139,7 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      {/* Live Customer Savings Calculation */}
+                      {/* Discount preview */}
                       {Number(productForm.originalPrice) > Number(productForm.price) && Number(productForm.price) > 0 && (
                         <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] space-y-1">
                           <div className="flex items-center justify-between font-bold">
@@ -3170,13 +3156,13 @@ export default function AdminPage() {
                       )}
                     </div>
 
-                    {/* Card 3: Inventory & Fulfillment */}
+                    {/* Inventory */}
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-2xs space-y-3.5">
                       <div className="pb-2 border-b border-gray-100 flex items-center justify-between">
                         <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">
                           Inventory & Stock
                         </h4>
-                        {/* Live Stock Health Pill */}
+                        {/* Stock indicator */}
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                           Number(productForm.stock) > 5
                             ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
@@ -3204,7 +3190,7 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    {/* Card 4: Catalog Classification & Status */}
+                    {/* Classification and status */}
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-2xs space-y-3.5">
                       <div className="pb-2 border-b border-gray-100">
                         <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">
@@ -3280,7 +3266,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* 3. STICKY MODAL FOOTER */}
+              {/* Modal footer */}
               <div className="px-5 sm:px-6 py-3 border-t border-gray-200 bg-white flex items-center justify-between sticky bottom-0 z-30">
                 <div className="flex items-center gap-2">
                   {editingProduct && (
@@ -3332,7 +3318,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* FLOATING CUSTOM MINIMAL STATUS DROPDOWN PORTAL */}
+      {/* Status selector popover */}
       {activeStatusMenu && (
         <div
           className="fixed z-50 min-w-[145px] bg-white rounded-lg border border-gray-200 shadow-xl py-1 text-xs animate-in fade-in duration-75"

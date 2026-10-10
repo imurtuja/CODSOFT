@@ -18,7 +18,7 @@ export async function generateStaticParams() {
   }
 }
 
-// High-speed in-memory server cache (<0.1ms retrieval for duplicate SSR & metadata queries)
+// In-memory cache for product details and metadata queries
 const productServerCache = new Map()
 const CACHE_TTL_MS = 60000 // 60s
 
@@ -136,7 +136,7 @@ export default async function ProductPage({ params }) {
     )
   }
 
-  // Schema.org Structured Data (Google Rich Results / Product Carousels)
+  // Product structured data
   const productSchema = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -171,7 +171,7 @@ export default async function ProductPage({ params }) {
     },
   }
 
-  // Schema.org Breadcrumbs
+  // Breadcrumb structured data
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -199,7 +199,7 @@ export default async function ProductPage({ params }) {
 
   return (
     <>
-      {/* Google Schema.org Product & Breadcrumb JSON-LD */}
+      {/* Structured data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}

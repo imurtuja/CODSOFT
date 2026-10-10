@@ -9,7 +9,7 @@ import { toast } from '../../components/Toast'
 import { ChevronRightIcon } from '../../components/CategoryIcons'
 
 export default function OrdersPage() {
-  // Instant SWR state: initialize synchronously from sessionStorage on client mount
+  // Hydrate orders from session storage
   const [orders, setOrders] = useState(() => {
     if (typeof window === 'undefined') return []
     try {

@@ -84,10 +84,10 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'login', onAut
         localStorage.setItem('token', data.token)
         localStorage.setItem('user', JSON.stringify(data.user))
 
-        // Sync offline cart to MongoDB
+        // Sync local cart items
         await syncCartOnLogin(data.user, data.token)
 
-        // Dispatch app-wide events
+        // Dispatch session and cart events
         window.dispatchEvent(new CustomEvent('userLoggedIn'))
         window.dispatchEvent(new Event('cartUpdated'))
 
@@ -151,7 +151,7 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'login', onAut
           localStorage.setItem('token', data.token)
         }
 
-        // Sync offline cart to MongoDB
+        // Sync local cart items
         await syncCartOnLogin(data.user, data.token)
 
         window.dispatchEvent(new CustomEvent('userLoggedIn'))
@@ -186,12 +186,12 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'login', onAut
 
       {/* Positioning wrapper */}
       <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-6">
-        {/* Modal Dialog Card */}
+        {/* Modal dialog card */}
         <div
           className="relative w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100 p-6 sm:p-8 text-left z-10 my-8 transform transition-all animate-in fade-in zoom-in-95 duration-200"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Close Button */}
+          {/* Close button */}
           <button
             type="button"
             onClick={onClose}
@@ -201,7 +201,7 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'login', onAut
           ✕
         </button>
 
-        {/* Brand Header */}
+        {/* Header */}
         <div className="text-center mb-6">
           <div className="w-11 h-11 bg-black rounded-xl mx-auto flex items-center justify-center mb-3 shadow-md">
             <span className="text-white font-extrabold text-base tracking-wider">EC</span>
@@ -216,7 +216,7 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'login', onAut
           </p>
         </div>
 
-        {/* Tab Switcher */}
+        {/* Tab switcher */}
         <div className="flex p-1 bg-gray-100 rounded-xl mb-5 text-xs font-bold">
           <button
             type="button"
@@ -248,7 +248,7 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'login', onAut
           </button>
         </div>
 
-        {/* Error Notification */}
+        {/* Error notice */}
         {errorMessage && (
           <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-start gap-2.5">
             <span className="text-red-500 font-bold shrink-0 mt-0.5">⚠️</span>
@@ -256,7 +256,7 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'login', onAut
           </div>
         )}
 
-        {/* LOGIN FORM */}
+        {/* Login form */}
         {activeTab === 'login' && (
           <form onSubmit={handleLoginSubmit} className="space-y-3.5">
             <div>
@@ -318,7 +318,7 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'login', onAut
           </form>
         )}
 
-        {/* SIGNUP FORM */}
+        {/* Signup form */}
         {activeTab === 'signup' && (
           <form onSubmit={handleSignupSubmit} className="space-y-3">
             <div className="grid grid-cols-2 gap-2.5">
@@ -428,7 +428,7 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'login', onAut
           </form>
         )}
 
-        {/* Footer info */}
+        {/* Terms notice */}
         <div className="mt-5 pt-4 border-t border-gray-100 text-center">
           <p className="text-[11px] text-gray-400">
             By continuing, you agree to EverCart&apos;s Terms of Service and Privacy Policy.

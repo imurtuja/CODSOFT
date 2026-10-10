@@ -56,7 +56,7 @@ export async function PUT(request, { params }) {
     
     const body = await request.json()
 
-    // Support quick partial updates (e.g. inline stock adjuster, isFeatured toggle, status toggle, isSpotlight toggle)
+    // Support partial updates (stock, status, toggles)
     if (!body.name && (body.stock !== undefined || body.isFeatured !== undefined || body.status !== undefined || body.isSpotlight !== undefined)) {
       const updateFields = {}
       if (body.stock !== undefined) updateFields.stock = parseInt(body.stock, 10)
@@ -65,7 +65,7 @@ export async function PUT(request, { params }) {
       if (body.isSpotlight !== undefined) {
         updateFields.isSpotlight = Boolean(body.isSpotlight)
         if (body.isSpotlight) {
-          // Unset spotlight on all other products so this product becomes the primary homepage top spotlight
+          // Ensure only one product has spotlight enabled
           await Product.updateMany({ _id: { $ne: id } }, { $set: { isSpotlight: false } })
         }
       }

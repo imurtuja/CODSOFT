@@ -20,16 +20,16 @@ export default function CartSkeleton() {
           <div className="w-24 h-8 rounded-lg skeleton-shimmer" />
         </div>
 
-        {/* 2-Column Responsive Layout */}
+        {/* Cart layout skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left: Cart Items List */}
+          {/* Items list skeleton */}
           <div className="lg:col-span-8 space-y-3">
             {[...Array(3)].map((_, idx) => (
               <div
                 key={idx}
                 className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-4"
               >
-                {/* Product Image Thumbnail */}
+                {/* Product thumbnail */}
                 <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl skeleton-shimmer shrink-0" />
 
                 {/* Details */}
@@ -50,7 +50,7 @@ export default function CartSkeleton() {
             ))}
           </div>
 
-          {/* Right: Order Summary Sidebar */}
+          {/* Summary sidebar skeleton */}
           <div className="lg:col-span-4 sticky top-24">
             <div className="bg-white rounded-2xl border border-gray-200/90 p-5 sm:p-6 space-y-4">
               <div className="w-32 h-6 rounded-lg skeleton-shimmer" />

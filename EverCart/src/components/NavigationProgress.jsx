@@ -32,7 +32,7 @@ export default function NavigationProgress() {
     setVisible(true)
     setProgress(35)
 
-    // Fluid asymptotic trickle: continuously creeps forward, NEVER gets stuck at a fixed number!
+    // Progress increment interval
     timerRef.current = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 96) return 96
@@ -42,13 +42,13 @@ export default function NavigationProgress() {
       })
     }, 100)
 
-    // Safety fallback: never leave the progress bar hanging for more than 1.5s
+    // Safety timeout fallback
     safetyTimeoutRef.current = setTimeout(() => {
       completeProgress()
     }, 1500)
   }, [completeProgress])
 
-  // Trigger completion immediately when pathname or searchParams changes
+  // Complete progress bar on route change
   useEffect(() => {
     const currentUrl = `${pathname}?${searchParams?.toString() || ''}`
     if (prevUrlRef.current && prevUrlRef.current !== currentUrl) {
@@ -57,7 +57,7 @@ export default function NavigationProgress() {
     prevUrlRef.current = currentUrl
   }, [pathname, searchParams, completeProgress])
 
-  // Intercept navigation clicks & listen for programmatic navigation events
+  // Listen for navigation link clicks
   useEffect(() => {
     const handleNavigationStart = (e) => {
       const anchor = e.target.closest('a')
@@ -122,7 +122,7 @@ export default function NavigationProgress() {
           transform: 'translate3d(0, 0, 0)',
         }}
       >
-        {/* Glowing live head beam: visually indicates active progress so it never looks dead */}
+        {/* Active progress indicator head */}
         <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-r from-transparent to-white/60 blur-[1px] animate-pulse" />
       </div>
     </div>

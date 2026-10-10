@@ -13,9 +13,9 @@ export default function ProductDetailSkeleton() {
           <div className="w-28 h-3.5 rounded skeleton-shimmer" />
         </div>
 
-        {/* 2-Column Product Layout Skeleton (45% Gallery / 55% Details) */}
+        {/* Product layout skeleton */}
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 xl:gap-12 items-start justify-between">
-          {/* Left: Gallery Column Skeleton (45% Width) */}
+          {/* Gallery skeleton */}
           <div className="w-full lg:w-[45%] shrink-0">
             <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 items-start">
               {/* Left thumbnail column */}
@@ -28,22 +28,22 @@ export default function ProductDetailSkeleton() {
                 ))}
               </div>
 
-              {/* Main Stage Image Skeleton (Directly rounded, 65-70% screen height) */}
+              {/* Main image skeleton */}
               <div className="flex-1 w-full min-w-0">
                 <div className="w-full h-[400px] sm:h-[480px] lg:h-[68vh] min-h-[460px] max-h-[720px] rounded-2xl skeleton-shimmer relative overflow-hidden" />
               </div>
             </div>
           </div>
 
-          {/* Right: Info & Purchase Column (55% Width) */}
+          {/* Product details skeleton */}
           <div className="w-full lg:w-[55%] min-w-0 flex-1 space-y-4 sm:space-y-5">
-            {/* Category / Brand Pill */}
+            {/* Category and brand pill */}
             <div className="flex items-center gap-2">
               <div className="w-20 h-5 rounded-full skeleton-shimmer" />
               <div className="w-24 h-5 rounded-full skeleton-shimmer" />
             </div>
 
-            {/* Title (2 lines) */}
+            {/* Title skeleton */}
             <div className="space-y-2">
               <div className="w-11/12 h-7 rounded-lg skeleton-shimmer" />
               <div className="w-3/4 h-7 rounded-lg skeleton-shimmer" />
@@ -54,7 +54,7 @@ export default function ProductDetailSkeleton() {
               <div className="w-24 h-6 rounded-md skeleton-shimmer" />
             </div>
 
-            {/* Price (Unboxed) */}
+            {/* Price skeleton */}
             <div className="space-y-1">
               <div className="flex items-baseline gap-3">
                 <div className="w-36 h-9 rounded-lg skeleton-shimmer" />
@@ -64,15 +64,15 @@ export default function ProductDetailSkeleton() {
               <div className="w-52 h-3.5 rounded skeleton-shimmer" />
             </div>
 
-            {/* Action Buttons Skeleton (Single line, 2-column grid) */}
+            {/* Action buttons skeleton */}
             <div className="pt-1 grid grid-cols-2 gap-3">
               <div className="h-11 rounded-xl skeleton-shimmer" />
               <div className="h-11 rounded-xl skeleton-shimmer" />
             </div>
 
-            {/* Interactive Clean Sections Skeleton */}
+            {/* Detail sections skeleton */}
             <div className="pt-2 divide-y divide-gray-100 border-t border-gray-100">
-              {/* Features Accordion Skeleton */}
+              {/* Features skeleton */}
               <div className="py-4 space-y-3.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
@@ -92,7 +92,7 @@ export default function ProductDetailSkeleton() {
                 </div>
               </div>
 
-              {/* Specs Accordion Skeleton */}
+              {/* Specifications skeleton */}
               <div className="py-4 space-y-3.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">

@@ -11,7 +11,7 @@ export async function POST(request) {
     
     const { email, password } = await request.json()
     
-    // Strict validation to prevent NoSQL operator injection ($gt, $ne, etc.)
+    // Sanitize inputs
     if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
       return NextResponse.json(
         { error: 'Email and password must be valid strings' },
@@ -21,7 +21,6 @@ export async function POST(request) {
 
     const cleanEmail = email.toLowerCase().trim()
     
-    // Find user
     const user = await User.findOne({ email: cleanEmail })
     if (!user) {
       return NextResponse.json(
@@ -30,7 +29,6 @@ export async function POST(request) {
       )
     }
     
-    // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password)
     if (!isPasswordValid) {
       return NextResponse.json(
@@ -39,7 +37,7 @@ export async function POST(request) {
       )
     }
     
-    // Generate JWT token
+    // Generate auth token
     const token = jwt.sign(
       { 
         userId: user._id, 
@@ -50,7 +48,7 @@ export async function POST(request) {
       { expiresIn: '7d', algorithm: 'HS256' }
     )
     
-    // Return user without password
+    // Exclude password hash from payload
     const { password: _, ...userWithoutPassword } = user.toObject()
     
     const response = NextResponse.json({
@@ -60,7 +58,7 @@ export async function POST(request) {
       user: userWithoutPassword
     })
 
-    // Set cookies for browser sessions
+    // Set session cookies
     const cookieDomain = getCookieDomain(request)
     const isProd = process.env.NODE_ENV === 'production'
 
@@ -71,13 +69,13 @@ export async function POST(request) {
       maxAge: 7 * 24 * 60 * 60,
     }
 
-    // 1. Direct host-only cookies (guaranteed on current origin)
+    // Host-only cookies
     response.cookies.set('token', token, { ...cookieBase, httpOnly: false })
     if (user.role === 'admin') {
       response.cookies.set('admin_token', token, { ...cookieBase, httpOnly: true })
     }
 
-    // 2. Cross-subdomain cookies for evercart.murtuja.in
+    // Cross-subdomain cookies
     if (cookieDomain) {
       response.cookies.set('token_shared', token, { ...cookieBase, domain: cookieDomain, httpOnly: false })
       if (user.role === 'admin') {

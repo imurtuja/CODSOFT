@@ -5,7 +5,7 @@ import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import { getAuthUser } from "@/lib/auth";
 
-// Check if Razorpay keys are available
+// Initialize Razorpay client if credentials are configured
 const keyId = process.env.RAZORPAY_KEY_ID;
 const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
@@ -19,7 +19,7 @@ export async function POST(request) {
     const { orderId, userId } = await request.json();
     const authUser = getAuthUser(request);
 
-    // Check if Razorpay is configured
+    // Verify gateway configuration
     if (!razorpay) {
       console.warn('Razorpay keys not configured in environment variables');
       return NextResponse.json(
@@ -47,7 +47,7 @@ export async function POST(request) {
 
     const cleanOrderId = String(orderId).trim();
 
-    // Find the order safely by ObjectId or orderId
+    // Lookup order by ObjectId or orderId
     let order = null;
     if (mongoose.Types.ObjectId.isValid(cleanOrderId)) {
       order = await Order.findById(cleanOrderId);
@@ -60,13 +60,13 @@ export async function POST(request) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Verify user owns this order
+    // Verify requester ownership
     const orderUserId = order.user ? order.user.toString() : null;
     if (orderUserId && String(orderUserId) !== String(effectiveUserId) && authUser?.role !== 'admin') {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Guard against paying an already paid or cancelled order
+    // Prevent duplicate payments or payment on cancelled orders
     if (order.paymentStatus === 'completed' || order.paymentStatus === 'paid') {
       return NextResponse.json({ error: "Order is already paid" }, { status: 400 });
     }
@@ -75,13 +75,10 @@ export async function POST(request) {
       return NextResponse.json({ error: "Order is cancelled" }, { status: 400 });
     }
 
-    // SECURITY: Authoritative amount calculated directly from DB record, NEVER trusting client amount
+    // Calculate authoritative amount directly from database record
     const authoritativeAmount = Math.max(1, Math.round(Number(order.totalAmount || order.total) || 0));
 
-    console.log(`Creating Razorpay order for authenticated DB amount: ₹${authoritativeAmount} (Order: ${order.orderId || order._id})`);
-
-    // In Razorpay test mode, max transaction is ₹5,00,000 (50,000,000 paise).
-    // If test order exceeds that, cap paise for test sandbox so popup modal opens successfully.
+    // Cap amount in test mode to satisfy Razorpay sandbox limit (₹5,00,000)
     const paiseAmount = Math.min(authoritativeAmount * 100, 49999900);
     const receiptId = String(order.orderId || order._id).slice(0, 40);
 
@@ -97,9 +94,7 @@ export async function POST(request) {
       },
     });
 
-    console.log("Razorpay order created successfully:", razorpayOrder.id);
-
-    // Update order with Razorpay order ID and pending status
+    // Record gateway order ID on order record
     order.payment = {
       method: "razorpay",
       status: "pending",

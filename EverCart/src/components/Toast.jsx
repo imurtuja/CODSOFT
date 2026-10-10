@@ -96,12 +96,12 @@ function ToastItem({ item, onRemove }) {
         )}
       </div>
 
-      {/* Message Text - strictly single line */}
+      {/* Message text */}
       <span className="text-xs sm:text-sm font-medium text-neutral-100 whitespace-nowrap truncate max-w-[220px] sm:max-w-[320px]">
         {item.message}
       </span>
 
-      {/* Quick Action Link for Cart - strictly single line */}
+      {/* Cart action link */}
       {isCart && item.type === 'success' && (
         <Link
           href="/cart"
@@ -139,7 +139,7 @@ export default function ToastContainer() {
       const { id, message, type, duration } = e.detail || {}
       if (!message) return
 
-      // Limit to max 3 toasts at a time
+      // Limit to 3 active toasts
       setToasts((prev) => [...prev.slice(-2), { id, message, type, duration }])
     }
 

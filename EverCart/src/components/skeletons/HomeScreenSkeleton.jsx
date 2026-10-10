@@ -3,7 +3,7 @@
 export default function HomeScreenSkeleton() {
   return (
     <div className="min-h-screen bg-gray-50/40 animate-pulse">
-      {/* 1. Hero Section Skeleton */}
+      {/* Hero section skeleton */}
       <section className="bg-gradient-to-b from-gray-50 via-white to-gray-50/60 border-b border-gray-200/80 py-12 sm:py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
@@ -77,7 +77,7 @@ export default function HomeScreenSkeleton() {
         </div>
       </section>
 
-      {/* 2. Trust & Guarantees Strip Skeleton */}
+      {/* Trust features skeleton */}
       <section className="bg-white border-b border-gray-200 py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -94,7 +94,7 @@ export default function HomeScreenSkeleton() {
         </div>
       </section>
 
-      {/* 3. Browse by Department Skeleton */}
+      {/* Department navigation skeleton */}
       <section className="py-12 sm:py-16 bg-gray-50/50 border-b border-gray-200/70">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="space-y-2">
@@ -114,7 +114,7 @@ export default function HomeScreenSkeleton() {
         </div>
       </section>
 
-      {/* 4. Featured Highlights Grid Skeleton */}
+      {/* Featured highlights skeleton */}
       <section className="py-12 sm:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="flex items-center justify-between">

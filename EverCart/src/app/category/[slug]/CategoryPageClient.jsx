@@ -74,7 +74,7 @@ export default function CategoryPageClient({ initialProducts, slug }) {
     }
   }, [initialProducts, fetchCategoryProducts])
 
-  // Extract distinct brands from products
+  // Extract available brands
   const availableBrands = useMemo(() => {
     const brands = new Set()
     rawProducts.forEach((p) => {
@@ -85,7 +85,7 @@ export default function CategoryPageClient({ initialProducts, slug }) {
     return Array.from(brands).sort()
   }, [rawProducts])
 
-  // Filter and sort products client-side
+  // Filter and sort products
   const filteredProducts = useMemo(() => {
     let result = [...rawProducts]
 
@@ -94,7 +94,7 @@ export default function CategoryPageClient({ initialProducts, slug }) {
       result = result.filter((p) => p.brand?.toLowerCase() === selectedBrand.toLowerCase())
     }
 
-    // In-stock only filter
+    // Stock filter
     if (inStockOnly) {
       result = result.filter((p) => (p.stock ?? 0) > 0)
     }
@@ -109,7 +109,7 @@ export default function CategoryPageClient({ initialProducts, slug }) {
       }
     }
 
-    // Sorting
+    // Sort results
     if (sortBy === 'price-low') {
       result.sort((a, b) => a.price - b.price)
     } else if (sortBy === 'price-high') {
@@ -119,7 +119,7 @@ export default function CategoryPageClient({ initialProducts, slug }) {
     } else if (sortBy === 'name') {
       result.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
     } else {
-      // featured
+      // Default featured order
       result.sort((a, b) => {
         if (a.isFeatured && !b.isFeatured) return -1
         if (!a.isFeatured && b.isFeatured) return 1

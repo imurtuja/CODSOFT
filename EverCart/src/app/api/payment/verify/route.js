@@ -32,7 +32,7 @@ export async function POST(request) {
       );
     }
 
-    // Verify the payment signature with Razorpay secret key
+    // Verify signature against gateway secret
     if (!process.env.RAZORPAY_KEY_SECRET) {
       console.warn('RAZORPAY_KEY_SECRET not set, proceeding in testing mode');
     } else {
@@ -50,7 +50,7 @@ export async function POST(request) {
       }
     }
 
-    // Find the order safely by ObjectId or orderId
+    // Lookup order by ObjectId or orderId
     const cleanOrderId = String(orderId).trim();
     let order = null;
     if (mongoose.Types.ObjectId.isValid(cleanOrderId)) {
@@ -64,18 +64,18 @@ export async function POST(request) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Verify razorpay order id matches the one registered in the DB
+    // Verify order matches expected gateway order ID
     if (order.razorpayOrderId && order.razorpayOrderId !== razorpayOrderId) {
       return NextResponse.json({ error: "Razorpay order reference mismatch" }, { status: 400 });
     }
 
-    // Verify user owns this order
+    // Verify requester ownership
     const orderUserId = order.user ? order.user.toString() : null;
     if (orderUserId && String(orderUserId) !== String(effectiveUserId) && authUser?.role !== 'admin') {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Update order payment status to verified completed
+    // Mark order as paid and confirmed
     order.paymentStatus = "completed";
     order.orderStatus = "confirmed";
     order.status = "confirmed";

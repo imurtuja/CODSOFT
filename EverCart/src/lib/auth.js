@@ -14,13 +14,13 @@ export function getAuthUser(request) {
   try {
     let token = null
 
-    // 1. Check Bearer Authorization header
+    // Bearer authorization header
     const authHeader = request.headers.get('authorization')
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = sanitizeToken(authHeader.substring(7))
     }
 
-    // 2. Check HTTP cookies (direct and cross-subdomain)
+    // Cookies (standard and shared)
     if (!token && typeof request.cookies?.get === 'function') {
       token = sanitizeToken(
         request.cookies.get('token')?.value ||
@@ -30,7 +30,7 @@ export function getAuthUser(request) {
       )
     }
 
-    // 2b. Check raw Cookie header fallback
+    // Cookie header fallback
     if (!token && typeof request.headers?.get === 'function') {
       const cookieHeader = request.headers.get('cookie')
       if (cookieHeader) {
@@ -49,7 +49,7 @@ export function getAuthUser(request) {
       }
     }
 
-    // 3. Check custom header fallback
+    // Custom header fallback
     if (!token) {
       token = sanitizeToken(request.headers.get('x-admin-token'))
     }

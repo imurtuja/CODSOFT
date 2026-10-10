@@ -251,7 +251,7 @@ function SearchPageContent() {
             )}
           </>
         ) : (
-          /* Empty State (Compact & Modern) */
+          /* Empty state */
           <div className="bg-white rounded-2xl border border-gray-200/90 p-6 sm:p-8 text-center max-w-lg mx-auto shadow-xs">
             <div className="w-14 h-14 bg-gray-100/80 rounded-2xl flex items-center justify-center mx-auto mb-3.5 text-gray-700 shadow-2xs border border-gray-200/60">
               <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,7 +266,7 @@ function SearchPageContent() {
               We couldn&apos;t find any matches. Check your spelling, try broader keywords, or select one of our popular tags below.
             </p>
 
-            {/* Quick Suggestion Chips */}
+            {/* Popular searches */}
             <div className="mb-5 pt-3 border-t border-gray-100">
               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">
                 Popular Searches
@@ -285,7 +285,7 @@ function SearchPageContent() {
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Actions */}
             <div className="grid grid-cols-2 gap-2 max-w-xs mx-auto">
               <Link
                 href="/products"

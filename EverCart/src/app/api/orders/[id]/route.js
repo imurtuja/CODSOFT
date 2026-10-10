@@ -32,11 +32,7 @@ export async function GET(request, { params }) {
       )
     }
 
-    // ========================================================
-    // STRICT SECURITY & PRIVACY VERIFICATION:
-    // Only the authenticated owner or admin can view this order.
-    // Unauthenticated callers or non-owners get 404 (zero leakage).
-    // ========================================================
+    // Verify viewer is either the order owner or an admin
     const authUser = getAuthUser(request)
     if (!authUser) {
       return NextResponse.json(
@@ -59,10 +55,7 @@ export async function GET(request, { params }) {
       )
     }
 
-    // ========================================================
-    // 30-MINUTE ORDER CONFIRMATION LINK EXPIRY:
-    // Order confirmation link expires 30 minutes after placement.
-    // ========================================================
+    // Check if the 30-minute confirmation link window has passed
     const orderTimestamp = new Date(order.orderDate || order.createdAt || Date.now()).getTime()
     const ageMs = Date.now() - orderTimestamp
     const CONFIRMATION_LIFESPAN_MS = 30 * 60 * 1000 // 30 minutes
@@ -71,7 +64,7 @@ export async function GET(request, { params }) {
     order.isConfirmationExpired = isConfirmationExpired
     order.confirmationExpiresAt = new Date(orderTimestamp + CONFIRMATION_LIFESPAN_MS).toISOString()
 
-    // Persist professional invoice number and Indian GST breakdown if not present
+    // Populate invoice number and GST breakdown if missing
     if (!order.invoiceNumber) {
       const orderDate = order.orderDate || order.createdAt || new Date()
       const d = new Date(orderDate)
@@ -82,9 +75,7 @@ export async function GET(request, { params }) {
       const invoiceDate = orderDate
 
       const total = order.totalAmount || order.total || 0
-      // Indian GST 18% inclusive inside price (MRP):
-      // Taxable Value = Total / 1.18
-      // Total GST = Total - Taxable Value
+      // Inclusive GST (18%) breakdown
       const taxableAmount = Math.round((total / 1.18) * 100) / 100
       const totalGst = Math.round((total - taxableAmount) * 100) / 100
       const cgst = Math.round((totalGst / 2) * 100) / 100

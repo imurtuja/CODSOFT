@@ -27,22 +27,22 @@ export default function NotFoundView() {
   return (
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-16 bg-white">
       <div className="max-w-md w-full text-center">
-        {/* Subtle 404 tag */}
+        {/* Status code */}
         <div className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase bg-gray-100 text-gray-800 mb-6 select-none cursor-default">
           Error 404
         </div>
 
-        {/* Big clean headline */}
+        {/* Heading */}
         <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight mb-4">
           Page Not Found
         </h1>
 
-        {/* Minimalist description */}
+        {/* Description */}
         <p className="text-gray-500 text-base sm:text-lg mb-8 leading-relaxed">
           The page you are looking for doesn&apos;t exist, has been removed, or is temporarily unavailable.
         </p>
 
-        {/* Action buttons */}
+        {/* Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             href={homeUrl}

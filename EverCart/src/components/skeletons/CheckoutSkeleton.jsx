@@ -13,7 +13,7 @@ export default function CheckoutSkeleton() {
           <div className="w-20 h-3.5 rounded skeleton-shimmer" />
         </div>
 
-        {/* Header with Modern Stepper Skeleton */}
+        {/* Header with stepper skeleton */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-gray-200">
             <div className="space-y-2">
@@ -42,9 +42,9 @@ export default function CheckoutSkeleton() {
           </div>
         </div>
 
-        {/* 2 Columns Main Grid */}
+        {/* Main layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column: Interactive Form Skeleton */}
+          {/* Form column skeleton */}
           <div className="lg:col-span-8 bg-white rounded-2xl border border-gray-200/90 shadow-xs p-6 sm:p-7 space-y-6">
             <div className="pb-5 border-b border-gray-100 flex items-center justify-between">
               <div className="space-y-1.5">
@@ -76,7 +76,7 @@ export default function CheckoutSkeleton() {
             </div>
           </div>
 
-          {/* Right Column: Order Summary Skeleton */}
+          {/* Order summary skeleton */}
           <div className="lg:col-span-4 space-y-4">
             <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-5 sm:p-6 space-y-4">
               <div className="flex justify-between items-center pb-4 border-b border-gray-100">
