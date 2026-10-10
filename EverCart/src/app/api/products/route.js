@@ -37,7 +37,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url)
     const isAdmin = searchParams.get('admin') === 'true'
 
-    const cacheKey = request.url
+    const cacheKey = searchParams.toString() || 'default'
     if (!isAdmin) {
       const cachedData = getCachedProducts(cacheKey)
       if (cachedData) {
